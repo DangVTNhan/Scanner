@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/DangVTNhan/Scanner/be/internal/models"
 	"github.com/DangVTNhan/Scanner/be/internal/services"
@@ -39,7 +41,7 @@ func (h *ReportHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(report)
 }
 
-// GetAllReports handles requests to retrieve all weather reports
+// GetAllReports handles requests to retrieve all weather reports (legacy endpoint)
 func (h *ReportHandler) GetAllReports(w http.ResponseWriter, r *http.Request) {
 	reports, err := h.reportService.GetAllReports(r.Context())
 	if err != nil {
@@ -49,6 +51,60 @@ func (h *ReportHandler) GetAllReports(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(reports)
+}
+
+// GetPaginatedReports handles requests to retrieve paginated weather reports with optional filtering
+func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	query := r.URL.Query()
+
+	// Create request object
+	req := &models.PaginatedReportsRequest{
+		LastID: query.Get("lastId"),
+		IsFiltered: false,
+	}
+
+	// Parse limit
+	if limitStr := query.Get("limit"); limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit <= 0 {
+			http.Error(w, "Invalid limit parameter", http.StatusBadRequest)
+			return
+		}
+		req.Limit = limit
+	}
+
+	// Parse from time
+	if fromTimeStr := query.Get("fromTime"); fromTimeStr != "" {
+		fromTime, err := time.Parse(time.RFC3339, fromTimeStr)
+		if err != nil {
+			http.Error(w, "Invalid fromTime parameter", http.StatusBadRequest)
+			return
+		}
+		req.FromTime = fromTime
+		req.IsFiltered = true
+	}
+
+	// Parse to time
+	if toTimeStr := query.Get("toTime"); toTimeStr != "" {
+		toTime, err := time.Parse(time.RFC3339, toTimeStr)
+		if err != nil {
+			http.Error(w, "Invalid toTime parameter", http.StatusBadRequest)
+			return
+		}
+		req.ToTime = toTime
+		req.IsFiltered = true
+	}
+
+	// Get paginated reports
+	response, err := h.reportService.GetPaginatedReports(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 // GetReportByID handles requests to retrieve a specific weather report

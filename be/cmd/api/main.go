@@ -59,6 +59,7 @@ func main() {
 	// API routes
 	router.HandleFunc("/api/reports", reportHandler.GenerateReport).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/reports", reportHandler.GetAllReports).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/reports/paginated", reportHandler.GetPaginatedReports).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/reports/{id}", reportHandler.GetReportByID).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/reports/compare", reportHandler.CompareReports).Methods("POST", "OPTIONS")
 
