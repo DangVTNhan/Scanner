@@ -42,3 +42,22 @@ type Deviation struct {
 	Humidity    float64 `json:"humidity"`
 	CloudCover  float64 `json:"cloudCover"`
 }
+
+// PaginatedReportsRequest represents a request for paginated reports with optional filtering
+type PaginatedReportsRequest struct {
+	Limit     int       `json:"limit,omitempty"`     // Number of reports to return (default: 10)
+	LastID    string    `json:"lastId,omitempty"`    // ID of the last report from the previous page (for cursor-based pagination)
+	FromTime  time.Time `json:"fromTime,omitempty"`  // Filter reports from this time
+	ToTime    time.Time `json:"toTime,omitempty"`    // Filter reports until this time
+	IsFiltered bool      `json:"isFiltered,omitempty"` // Whether filtering is applied
+}
+
+// PaginatedReportsResponse represents a paginated response of weather reports
+type PaginatedReportsResponse struct {
+	Reports     []WeatherReport `json:"reports"`               // List of reports for the current page
+	TotalCount  int             `json:"totalCount,omitempty"`  // Total number of reports (only when not filtered)
+	HasMore     bool            `json:"hasMore"`              // Whether there are more reports to fetch
+	CurrentPage int             `json:"currentPage"`          // Current page number
+	FromNumber  int             `json:"fromNumber"`           // Starting index of the current page
+	ToNumber    int             `json:"toNumber"`             // Ending index of the current page
+}

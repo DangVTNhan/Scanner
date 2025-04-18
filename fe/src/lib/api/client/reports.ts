@@ -3,12 +3,14 @@
  */
 
 import { API_BASE_URL, defaultOptions } from '../constants';
-import { 
-  WeatherReport, 
-  ReportRequest, 
-  ComparisonRequest, 
-  ComparisonResult 
-} from '../types';
+import {
+  ComparisonRequest,
+  ComparisonResult,
+  PaginatedReportsRequest,
+  PaginatedReportsResponse,
+  ReportRequest,
+  WeatherReport,
+} from "../types";
 
 /**
  * Generate a new weather report
@@ -32,7 +34,7 @@ export async function generateReport(
 }
 
 /**
- * Get all weather reports
+ * Get all weather reports (legacy method)
  * @returns Promise with an array of weather reports
  */
 export async function getAllReports(): Promise<WeatherReport[]> {
@@ -40,6 +42,48 @@ export async function getAllReports(): Promise<WeatherReport[]> {
 
   if (!response.ok) {
     throw new Error(`Failed to fetch reports: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get paginated reports with optional filtering
+ * @param params Pagination and filtering parameters
+ * @returns Promise with paginated reports response
+ */
+export async function getPaginatedReports(
+  params: PaginatedReportsRequest = {}
+): Promise<PaginatedReportsResponse> {
+  // Build query string
+  const queryParams = new URLSearchParams();
+
+  if (params.limit) {
+    queryParams.append("limit", params.limit.toString());
+  }
+
+  if (params.lastId) {
+    queryParams.append("lastId", params.lastId);
+  }
+
+  if (params.fromTime) {
+    queryParams.append("fromTime", params.fromTime);
+  }
+
+  if (params.toTime) {
+    queryParams.append("toTime", params.toTime);
+  }
+
+  const url = `${API_BASE_URL}/reports/paginated${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  const response = await fetch(url, defaultOptions);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch paginated reports: ${response.statusText}`
+    );
   }
 
   return response.json();
