@@ -38,7 +38,12 @@ func (h *ReportHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(report)
+	err = json.NewEncoder(w).Encode(report)
+	if err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 // GetAllReports handles requests to retrieve all weather reports (legacy endpoint)

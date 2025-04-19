@@ -45,7 +45,8 @@ func (s *ReportService) GenerateReport(ctx context.Context, req *request.ReportR
 	var err error
 
 	// Check if a valid weather cache exists
-	cache, err := s.weatherCacheRepo.FindWeatherCacheByTimestamp(ctx, timestamp, 2)
+	cache, err := s.weatherCacheRepo.FindWeatherCacheByTimestamp(ctx, timestamp, 1)
+	cache = nil
 	if err == nil && cache != nil {
 		return &models.WeatherReport{
 			Timestamp:   timestamp,
@@ -59,7 +60,7 @@ func (s *ReportService) GenerateReport(ctx context.Context, req *request.ReportR
 	}
 	// If timestamp is within the last hour, get current weather
 	// Otherwise, get historical weather
-	if time.Since(timestamp) < time.Hour {
+	if time.Since(timestamp) < 10*time.Minute {
 		weatherData, err = s.weatherService.GetCurrentWeather()
 	} else {
 		weatherData, err = s.weatherService.GetHistoricalWeather(timestamp)
