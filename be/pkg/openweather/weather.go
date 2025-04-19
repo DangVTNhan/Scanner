@@ -9,7 +9,10 @@ import (
 )
 
 type IWeatherService interface {
+	// GetCurrentWeather fetches the current weather
 	GetCurrentWeather() (*WeatherData, error)
+
+	// GetHistoricalWeather fetches historical weather data
 	GetHistoricalWeather(timestamp time.Time) (*WeatherData, error)
 }
 
