@@ -6,13 +6,12 @@ import (
 	"github.com/DangVTNhan/Scanner/be/internal/models"
 	"github.com/DangVTNhan/Scanner/be/internal/models/request"
 	"github.com/DangVTNhan/Scanner/be/internal/models/response"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // IReportRepository defines the interface for report data access
 type IReportRepository interface {
 	// InsertReport inserts a new weather report into the database
-	InsertReport(ctx context.Context, report *models.WeatherReport) (primitive.ObjectID, error)
+	InsertReport(ctx context.Context, report *models.WeatherReport) (string, error)
 
 	// FindAllReports retrieves all weather reports
 	FindAllReports(ctx context.Context) ([]models.WeatherReport, error)
