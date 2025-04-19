@@ -1,13 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
-import { compareReports, ComparisonResult } from '@/lib/api';
-import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { compareReports, ComparisonResult } from "@/lib/api";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function ComparisonClient() {
   const searchParams = useSearchParams();
@@ -79,7 +92,9 @@ export default function ComparisonClient() {
         <CardHeader>
           <CardTitle>Comparison Results</CardTitle>
           <CardDescription>
-            Comparing weather reports from {formatDate(comparison.report1.timestamp)} and {formatDate(comparison.report2.timestamp)}
+            Comparing weather reports from{" "}
+            {formatDate(comparison.report1.timestamp)} and{" "}
+            {formatDate(comparison.report2.timestamp)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,33 +110,45 @@ export default function ComparisonClient() {
             <TableBody>
               <TableRow>
                 <TableCell className="font-medium">Timestamp</TableCell>
-                <TableCell>{formatDate(comparison.report1.timestamp)}</TableCell>
-                <TableCell>{formatDate(comparison.report2.timestamp)}</TableCell>
+                <TableCell>
+                  {formatDate(comparison.report1.timestamp)}
+                </TableCell>
+                <TableCell>
+                  {formatDate(comparison.report2.timestamp)}
+                </TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Temperature (°C)</TableCell>
                 <TableCell>{comparison.report1.temperature}</TableCell>
                 <TableCell>{comparison.report2.temperature}</TableCell>
-                <TableCell>{comparison.deviation.temperature}</TableCell>
+                <TableCell>
+                  {comparison.deviation.temperature.toFixed(2)}
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Pressure (hPa)</TableCell>
                 <TableCell>{comparison.report1.pressure}</TableCell>
                 <TableCell>{comparison.report2.pressure}</TableCell>
-                <TableCell>{comparison.deviation.pressure}</TableCell>
+                <TableCell>
+                  {comparison.deviation.pressure.toFixed(2)}
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Humidity (%)</TableCell>
                 <TableCell>{comparison.report1.humidity}</TableCell>
                 <TableCell>{comparison.report2.humidity}</TableCell>
-                <TableCell>{comparison.deviation.humidity}</TableCell>
+                <TableCell>
+                  {comparison.deviation.humidity.toFixed(2)}
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Cloud Cover (%)</TableCell>
                 <TableCell>{comparison.report1.cloudCover}</TableCell>
                 <TableCell>{comparison.report2.cloudCover}</TableCell>
-                <TableCell>{comparison.deviation.cloudCover}</TableCell>
+                <TableCell>
+                  {comparison.deviation.cloudCover.toFixed(2)}
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>

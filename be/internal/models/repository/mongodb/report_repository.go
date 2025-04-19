@@ -29,13 +29,15 @@ func NewMongoReportRepository(db *mongo.Database) repository.IReportRepository {
 }
 
 // InsertReport inserts a new weather report into the database
-func (r *MongoReportRepository) InsertReport(ctx context.Context, report *models.WeatherReport) (primitive.ObjectID, error) {
+func (r *MongoReportRepository) InsertReport(ctx context.Context, report *models.WeatherReport) (string, error) {
 	result, err := r.collection.InsertOne(ctx, report)
 	if err != nil {
-		return primitive.NilObjectID, fmt.Errorf("failed to save report: %w", err)
+		return "", fmt.Errorf("failed to save report: %w", err)
 	}
 
-	return result.InsertedID.(primitive.ObjectID), nil
+	// Convert ObjectID to string
+	objectID := result.InsertedID.(primitive.ObjectID)
+	return objectID.Hex(), nil
 }
 
 // FindAllReports retrieves all weather reports
@@ -80,11 +82,15 @@ func (r *MongoReportRepository) FindPaginatedReports(ctx context.Context, req *r
 
 	// Add cursor-based pagination if lastID is provided
 	if req.LastID != "" {
+		// Try to convert to ObjectID first
 		lastObjectID, err := primitive.ObjectIDFromHex(req.LastID)
 		if err != nil {
-			return nil, fmt.Errorf("invalid last ID format: %w", err)
+			// If not a valid ObjectID, use string ID directly
+			filter["_id"] = bson.M{"$lt": req.LastID}
+		} else {
+			// If it's a valid ObjectID, use it
+			filter["_id"] = bson.M{"$lt": lastObjectID}
 		}
-		filter["_id"] = bson.M{"$lt": lastObjectID}
 	}
 
 	// Set up options for sorting and limiting
@@ -142,11 +148,22 @@ func (r *MongoReportRepository) FindPaginatedReports(ctx context.Context, req *r
 
 // FindReportByID retrieves a weather report by its ID
 func (r *MongoReportRepository) FindReportByID(ctx context.Context, id string) (*models.WeatherReport, error) {
+	// Check if the ID is a valid ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ID format: %w", err)
+		// If not a valid ObjectID, try to find by string ID directly
+		var report models.WeatherReport
+		err = r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&report)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return nil, fmt.Errorf("report not found")
+			}
+			return nil, fmt.Errorf("failed to retrieve report: %w", err)
+		}
+		return &report, nil
 	}
 
+	// If it's a valid ObjectID, search by ObjectID
 	var report models.WeatherReport
 	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&report)
 	if err != nil {

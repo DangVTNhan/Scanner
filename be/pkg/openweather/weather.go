@@ -3,6 +3,7 @@ package openweather
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DangVTNhan/Scanner/be/pkg/openweather/response"
 	"net/http"
 	"time"
 )
@@ -13,7 +14,7 @@ type IWeatherService interface {
 }
 
 const (
-	baseURL = "https://api.openweathermap.org/data/2.5"
+	baseURL = "https://api.openweathermap.org/data/3.0/onecall"
 	// Changi Airport coordinates
 	latitude  = 1.3586
 	longitude = 103.9899
@@ -44,20 +45,9 @@ type WeatherData struct {
 }
 
 // apiResponse represents the response from OpenWeather API
-type apiResponse struct {
-	Main struct {
-		Temp     float64 `json:"temp"`
-		Pressure float64 `json:"pressure"`
-		Humidity float64 `json:"humidity"`
-	} `json:"main"`
-	Clouds struct {
-		All float64 `json:"all"`
-	} `json:"clouds"`
-}
-
 // GetCurrentWeather fetches the current weather for Changi Airport
 func (s *WeatherService) GetCurrentWeather() (*WeatherData, error) {
-	url := fmt.Sprintf("%s/weather?lat=%f&lon=%f&appid=%s&units=metric", baseURL, latitude, longitude, s.apiKey)
+	url := fmt.Sprintf("%s?lat=%f&lon=%f&appid=%s&units=metric", baseURL, latitude, longitude, s.apiKey)
 
 	resp, err := s.client.Get(url)
 	if err != nil {
@@ -69,16 +59,16 @@ func (s *WeatherService) GetCurrentWeather() (*WeatherData, error) {
 		return nil, fmt.Errorf("OpenWeather API returned non-OK status: %d", resp.StatusCode)
 	}
 
-	var apiResp apiResponse
+	var apiResp response.GetCurrentWeatherResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, fmt.Errorf("failed to decode API response: %w", err)
 	}
 
 	return &WeatherData{
-		Temperature: apiResp.Main.Temp,
-		Pressure:    apiResp.Main.Pressure,
-		Humidity:    apiResp.Main.Humidity,
-		CloudCover:  apiResp.Clouds.All,
+		Temperature: apiResp.Current.Temp,
+		Pressure:    apiResp.Current.Pressure,
+		Humidity:    apiResp.Current.Humidity,
+		CloudCover:  apiResp.Current.Clouds,
 	}, nil
 }
 
@@ -86,15 +76,32 @@ func (s *WeatherService) GetCurrentWeather() (*WeatherData, error) {
 // Note: This requires a paid OpenWeather API subscription
 // For a free alternative, we could store our own historical data
 func (s *WeatherService) GetHistoricalWeather(timestamp time.Time) (*WeatherData, error) {
-	// For demonstration purposes, we'll return mock data
-	// In a real application, you would use the OpenWeather historical data API
-	// or implement a solution to store and retrieve your own historical data
+	url := fmt.Sprintf("%s/timemachine?lat=%f&lon=%f&dt=%d&appid=%s&units=metric", baseURL, latitude, longitude, timestamp.Unix(), s.apiKey)
 
-	// This is a simplified implementation
+	resp, err := s.client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch weather data: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("OpenWeather API returned non-OK status: %d", resp.StatusCode)
+	}
+
+	var apiResp response.GetHistoricalTimeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		return nil, fmt.Errorf("failed to decode API response: %w", err)
+	}
+
+	if len(apiResp.Data) == 0 {
+		return nil, fmt.Errorf("no historical data found for the given timestamp")
+	}
+	// Use the first data point in the response
+	data := apiResp.Data[0]
 	return &WeatherData{
-		Temperature: 30.0,
-		Pressure:    1013.0,
-		Humidity:    70.0,
-		CloudCover:  40.0,
+		Temperature: data.Temp,
+		Pressure:    data.Pressure,
+		Humidity:    data.Humidity,
+		CloudCover:  data.Clouds,
 	}, nil
 }
