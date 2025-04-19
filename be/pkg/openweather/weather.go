@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+type IWeatherService interface {
+	GetCurrentWeather() (*WeatherData, error)
+	GetHistoricalWeather(timestamp time.Time) (*WeatherData, error)
+}
+
 const (
 	baseURL = "https://api.openweathermap.org/data/2.5"
 	// Changi Airport coordinates
@@ -21,7 +26,7 @@ type WeatherService struct {
 }
 
 // NewWeatherService creates a new instance of WeatherService
-func NewWeatherService(apiKey string) *WeatherService {
+func NewWeatherService(apiKey string) IWeatherService {
 	return &WeatherService{
 		apiKey: apiKey,
 		client: &http.Client{
@@ -53,22 +58,22 @@ type apiResponse struct {
 // GetCurrentWeather fetches the current weather for Changi Airport
 func (s *WeatherService) GetCurrentWeather() (*WeatherData, error) {
 	url := fmt.Sprintf("%s/weather?lat=%f&lon=%f&appid=%s&units=metric", baseURL, latitude, longitude, s.apiKey)
-	
+
 	resp, err := s.client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch weather data: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("OpenWeather API returned non-OK status: %d", resp.StatusCode)
 	}
-	
+
 	var apiResp apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, fmt.Errorf("failed to decode API response: %w", err)
 	}
-	
+
 	return &WeatherData{
 		Temperature: apiResp.Main.Temp,
 		Pressure:    apiResp.Main.Pressure,
@@ -84,7 +89,7 @@ func (s *WeatherService) GetHistoricalWeather(timestamp time.Time) (*WeatherData
 	// For demonstration purposes, we'll return mock data
 	// In a real application, you would use the OpenWeather historical data API
 	// or implement a solution to store and retrieve your own historical data
-	
+
 	// This is a simplified implementation
 	return &WeatherData{
 		Temperature: 30.0,

@@ -2,22 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/DangVTNhan/Scanner/be/internal/models/request"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/DangVTNhan/Scanner/be/internal/models"
 	"github.com/DangVTNhan/Scanner/be/internal/services"
 	"github.com/gorilla/mux"
 )
 
 // ReportHandler handles HTTP requests related to weather reports
 type ReportHandler struct {
-	reportService *services.ReportService
+	reportService services.IReportService
 }
 
 // NewReportHandler creates a new instance of ReportHandler
-func NewReportHandler(reportService *services.ReportService) *ReportHandler {
+func NewReportHandler(reportService services.IReportService) *ReportHandler {
 	return &ReportHandler{
 		reportService: reportService,
 	}
@@ -25,7 +25,7 @@ func NewReportHandler(reportService *services.ReportService) *ReportHandler {
 
 // GenerateReport handles requests to generate a new weather report
 func (h *ReportHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
-	var req models.ReportRequest
+	var req request.ReportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -59,8 +59,8 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 	query := r.URL.Query()
 
 	// Create request object
-	req := &models.PaginatedReportsRequest{
-		LastID: query.Get("lastId"),
+	req := &request.PaginatedReportsRequest{
+		LastID:     query.Get("lastId"),
 		IsFiltered: false,
 	}
 
@@ -128,7 +128,7 @@ func (h *ReportHandler) GetReportByID(w http.ResponseWriter, r *http.Request) {
 
 // CompareReports handles requests to compare two weather reports
 func (h *ReportHandler) CompareReports(w http.ResponseWriter, r *http.Request) {
-	var req models.ComparisonRequest
+	var req request.ComparisonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return

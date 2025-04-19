@@ -13,6 +13,7 @@ import (
 	"github.com/DangVTNhan/Scanner/be/configs"
 	"github.com/DangVTNhan/Scanner/be/internal/handlers"
 	"github.com/DangVTNhan/Scanner/be/internal/middleware"
+	"github.com/DangVTNhan/Scanner/be/internal/models/repository/mongodb"
 	"github.com/DangVTNhan/Scanner/be/internal/services"
 	"github.com/DangVTNhan/Scanner/be/pkg/openweather"
 	"github.com/gorilla/mux"
@@ -45,7 +46,12 @@ func main() {
 	// Initialize services
 	db := client.Database(config.DatabaseName)
 	weatherService := openweather.NewWeatherService(config.OpenWeatherAPIKey)
-	reportService := services.NewReportService(db, weatherService)
+
+	// Initialize repositories
+	reportRepository := mongodb.NewMongoReportRepository(db)
+
+	// Initialize services with repositories
+	reportService := services.NewReportService(reportRepository, weatherService)
 
 	// Initialize handlers
 	reportHandler := handlers.NewReportHandler(reportService)
