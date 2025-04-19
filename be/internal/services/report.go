@@ -13,24 +13,21 @@ import (
 	"github.com/DangVTNhan/Scanner/be/pkg/openweather"
 )
 
-type IReportService interface {
-	GenerateReport(ctx context.Context, req *request.ReportRequest) (*models.WeatherReport, error)
-	GetAllReports(ctx context.Context) ([]models.WeatherReport, error)
-	GetPaginatedReports(ctx context.Context, req *request.PaginatedReportsRequest) (*response.PaginatedReportsResponse, error)
-	GetReportByID(ctx context.Context, id string) (*models.WeatherReport, error)
-	CompareReports(ctx context.Context, req *request.ComparisonRequest) (*response.ComparisonResult, error)
-}
-
 // ReportService handles business logic for weather reports
 type ReportService struct {
 	reportRepository repository.IReportRepository
+	weatherCacheRepo repository.IWeatherCacheRepository
 	weatherService   openweather.IWeatherService
 }
 
 // NewReportService creates a new instance of ReportService
-func NewReportService(reportRepository repository.IReportRepository, weatherService openweather.IWeatherService) *ReportService {
+func NewReportService(
+	reportRepository repository.IReportRepository,
+	weatherCacheRepo repository.IWeatherCacheRepository,
+	weatherService openweather.IWeatherService) *ReportService {
 	return &ReportService{
 		reportRepository: reportRepository,
+		weatherCacheRepo: weatherCacheRepo,
 		weatherService:   weatherService,
 	}
 }
@@ -47,6 +44,19 @@ func (s *ReportService) GenerateReport(ctx context.Context, req *request.ReportR
 	var weatherData *openweather.WeatherData
 	var err error
 
+	// Check if a valid weather cache exists
+	cache, err := s.weatherCacheRepo.FindWeatherCacheByTimestamp(ctx, timestamp, 2)
+	if err == nil && cache != nil {
+		return &models.WeatherReport{
+			Timestamp:   timestamp,
+			Temperature: cache.WeatherData.Temperature,
+			Pressure:    cache.WeatherData.Pressure,
+			Humidity:    cache.WeatherData.Humidity,
+			CloudCover:  cache.WeatherData.CloudCover,
+			CreatedAt:   timestamp,
+			ID:          cache.ID,
+		}, nil
+	}
 	// If timestamp is within the last hour, get current weather
 	// Otherwise, get historical weather
 	if time.Since(timestamp) < time.Hour {
@@ -71,6 +81,18 @@ func (s *ReportService) GenerateReport(ctx context.Context, req *request.ReportR
 	insertedID, err := s.reportRepository.InsertReport(ctx, report)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save report: %w", err)
+	}
+
+	// Save the weather data to cache
+	cache = &models.WeatherCache{
+		Timestamp:   timestamp,
+		WeatherData: *weatherData,
+		CreatedAt:   time.Now(),
+	}
+
+	_, err = s.weatherCacheRepo.SaveWeatherCache(ctx, cache)
+	if err != nil {
+		// TODO: Handle error (e.g., log it)
 	}
 
 	report.ID = insertedID
