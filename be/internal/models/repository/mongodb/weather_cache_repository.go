@@ -15,12 +15,12 @@ import (
 
 // MongoWeatherCacheRepository implements the IWeatherCacheRepository interface for MongoDB
 type MongoWeatherCacheRepository struct {
-	db         *mongo.Database
-	collection *mongo.Collection
+	db         IDatabase
+	collection ICollection
 }
 
 // NewMongoWeatherCacheRepository creates a new instance of MongoWeatherCacheRepository
-func NewMongoWeatherCacheRepository(db *mongo.Database) repository.IWeatherCacheRepository {
+func NewMongoWeatherCacheRepository(db IDatabase) repository.IWeatherCacheRepository {
 	return &MongoWeatherCacheRepository{
 		db:         db,
 		collection: db.Collection("weather_cache"),
