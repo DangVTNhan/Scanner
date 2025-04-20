@@ -31,12 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 w-full border-b bg-background">
-            <div className="container flex h-16 items-center">
-              <h1 className="text-xl font-bold">
-                Changi Airport Weather Report System
-              </h1>
-              <nav className="ml-auto flex gap-4">
+          <header className="sticky top-0 z-50 w-full border-b bg-background mb-4">
+            <div className="container mx-auto flex justify-between items-center h-16 px-4 py-2">
+              <h1 className="text-xl font-bold">Weather Report System</h1>
+              <nav className="flex space-x-4">
                 <Link href="/" className="text-sm font-medium hover:underline">
                   Generate Report
                 </Link>
@@ -49,9 +47,9 @@ export default function RootLayout({
               </nav>
             </div>
           </header>
-          <main className="flex-1 container py-6">{children}</main>
+          <main className="flex-1 py-6 px-4">{children}</main>
           <footer className="border-t py-4">
-            <div className="container text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm text-muted-foreground">
               &copy; {new Date().getFullYear()} Changi Airport Weather Report
               System
             </div>

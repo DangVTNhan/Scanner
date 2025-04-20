@@ -44,6 +44,12 @@ chmod +x setup.sh
 
 
 2. Edit the `.env` file to add your OpenWeather API key.
+```bash
+# Edit the .env file
+OPENWEATHER_API_KEY=your_api_key
+```
+
+2.1 If you need openweather api key, you can get it from [here](https://openweathermap.org/api/one-call-3) it required credit card information. Or you can DM me at (nhan.dangviettrung@gmail.com) to get a free api key.
 
 3. Access the application at http://localhost:3000
 
