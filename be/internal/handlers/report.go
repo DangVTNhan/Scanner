@@ -3,9 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/DangVTNhan/Scanner/be/internal/interfaces"
+	"github.com/DangVTNhan/Scanner/be/internal/models/errors"
 	"github.com/DangVTNhan/Scanner/be/internal/models/request"
+	"github.com/DangVTNhan/Scanner/be/internal/models/response"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -27,35 +30,47 @@ func NewReportHandler(reportService interfaces.IReportService) *ReportHandler {
 func (h *ReportHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
 	var req request.ReportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		respondWithError(w, "Invalid request body", errors.ErrCodeInvalidRequest, nil, http.StatusBadRequest)
 		return
 	}
 
 	report, err := h.reportService.GenerateReport(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorCode := errors.ErrCodeServerError
+		statusCode := http.StatusInternalServerError
+
+		// Determine specific error code based on error message
+		if strings.Contains(err.Error(), "failed to get weather data") {
+			errorCode = errors.ErrCodeWeatherServiceResponse
+		} else if strings.Contains(err.Error(), "failed to save report") {
+			errorCode = errors.ErrCodeDatabaseInsert
+		}
+
+		respondWithError(w, err.Error(), errorCode, nil, statusCode)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(report)
-	if err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
 	w.WriteHeader(http.StatusCreated)
+	responseData := response.NewSuccessResponse("Report generated successfully", report)
+	json.NewEncoder(w).Encode(responseData)
 }
 
 // GetAllReports handles requests to retrieve all weather reports (legacy endpoint)
 func (h *ReportHandler) GetAllReports(w http.ResponseWriter, r *http.Request) {
 	reports, err := h.reportService.GetAllReports(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorCode := errors.ErrCodeServerError
+		if strings.Contains(err.Error(), "failed to retrieve reports") {
+			errorCode = errors.ErrCodeDatabaseQuery
+		}
+		respondWithError(w, err.Error(), errorCode, nil, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(reports)
+	responseData := response.NewSuccessResponse("Reports retrieved successfully", reports)
+	json.NewEncoder(w).Encode(responseData)
 }
 
 // GetPaginatedReports handles requests to retrieve paginated weather reports with optional filtering
@@ -73,7 +88,7 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 	if limitStr := query.Get("limit"); limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil || limit <= 0 {
-			http.Error(w, "Invalid limit parameter", http.StatusBadRequest)
+			respondWithError(w, "Invalid limit parameter", errors.ErrCodeInvalidParameters, nil, http.StatusBadRequest)
 			return
 		}
 		req.Limit = limit
@@ -83,7 +98,7 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 	if fromTimeStr := query.Get("fromTime"); fromTimeStr != "" {
 		fromTime, err := time.Parse(time.RFC3339, fromTimeStr)
 		if err != nil {
-			http.Error(w, "Invalid fromTime parameter", http.StatusBadRequest)
+			respondWithError(w, "Invalid fromTime parameter", errors.ErrCodeInvalidParameters, nil, http.StatusBadRequest)
 			return
 		}
 		req.FromTime = fromTime
@@ -94,7 +109,7 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 	if toTimeStr := query.Get("toTime"); toTimeStr != "" {
 		toTime, err := time.Parse(time.RFC3339, toTimeStr)
 		if err != nil {
-			http.Error(w, "Invalid toTime parameter", http.StatusBadRequest)
+			respondWithError(w, "Invalid toTime parameter", errors.ErrCodeInvalidParameters, nil, http.StatusBadRequest)
 			return
 		}
 		req.ToTime = toTime
@@ -102,14 +117,19 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Get paginated reports
-	response, err := h.reportService.GetPaginatedReports(r.Context(), req)
+	paginatedResponse, err := h.reportService.GetPaginatedReports(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorCode := errors.ErrCodeServerError
+		if strings.Contains(err.Error(), "failed to retrieve reports") {
+			errorCode = errors.ErrCodeDatabaseQuery
+		}
+		respondWithError(w, err.Error(), errorCode, nil, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	responseData := response.NewSuccessResponse("Reports retrieved successfully", paginatedResponse)
+	json.NewEncoder(w).Encode(responseData)
 }
 
 // GetReportByID handles requests to retrieve a specific weather report
@@ -120,31 +140,60 @@ func (h *ReportHandler) GetReportByID(w http.ResponseWriter, r *http.Request) {
 	report, err := h.reportService.GetReportByID(r.Context(), id)
 	if err != nil {
 		if err.Error() == "report not found" {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			respondWithError(w, "Report not found", errors.ErrCodeReportNotFound, nil, http.StatusNotFound)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			errorCode := errors.ErrCodeServerError
+			if strings.Contains(err.Error(), "failed to retrieve report") {
+				errorCode = errors.ErrCodeDatabaseQuery
+			}
+			respondWithError(w, err.Error(), errorCode, nil, http.StatusInternalServerError)
 		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(report)
+	responseData := response.NewSuccessResponse("Report retrieved successfully", report)
+	json.NewEncoder(w).Encode(responseData)
 }
 
 // CompareReports handles requests to compare two weather reports
 func (h *ReportHandler) CompareReports(w http.ResponseWriter, r *http.Request) {
 	var req request.ComparisonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		respondWithError(w, "Invalid request body", errors.ErrCodeInvalidRequest, nil, http.StatusBadRequest)
 		return
 	}
 
 	result, err := h.reportService.CompareReports(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorCode := errors.ErrCodeServerError
+		statusCode := http.StatusInternalServerError
+
+		if strings.Contains(err.Error(), "failed to retrieve first report") ||
+			strings.Contains(err.Error(), "failed to retrieve second report") {
+			if strings.Contains(err.Error(), "report not found") {
+				errorCode = errors.ErrCodeReportNotFound
+				statusCode = http.StatusNotFound
+			} else {
+				errorCode = errors.ErrCodeDatabaseQuery
+			}
+		} else if strings.Contains(err.Error(), "failed to compare reports") {
+			errorCode = errors.ErrCodeReportComparison
+		}
+
+		respondWithError(w, err.Error(), errorCode, nil, statusCode)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	responseData := response.NewSuccessResponse("Reports compared successfully", result)
+	json.NewEncoder(w).Encode(responseData)
+}
+
+// respondWithError is a helper function to send standardized error responses
+func respondWithError(w http.ResponseWriter, message string, errorCode string, data interface{}, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	response := response.NewErrorResponse(message, errorCode, data)
+	json.NewEncoder(w).Encode(response)
 }

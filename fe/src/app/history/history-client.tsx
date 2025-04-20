@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getPaginatedReports, PaginatedReportsResponse } from "@/lib/api";
+import { handleApiError } from "@/lib/api/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -136,8 +137,7 @@ export default function HistoryClient() {
       const data = await getPaginatedReports(params);
       setPaginatedData(data);
     } catch (error) {
-      console.error("Failed to fetch reports:", error);
-      toast.error("Failed to load weather reports");
+      handleApiError(error, "Failed to load weather reports");
     } finally {
       setLoading(false);
     }

@@ -18,6 +18,13 @@ type IWeatherService interface {
 	GetHistoricalWeather(timestamp time.Time) (*WeatherData, error)
 }
 
+type WeatherService struct {
+	apiKey string
+	client *http.Client
+	sfg    singleflight.Group
+}
+
+
 const (
 	baseURL = "https://api.openweathermap.org/data/3.0/onecall"
 	// Changi Airport coordinates
@@ -26,11 +33,6 @@ const (
 )
 
 // WeatherService handles interactions with the OpenWeather API
-type WeatherService struct {
-	apiKey string
-	client *http.Client
-	sfg    singleflight.Group
-}
 
 // NewWeatherService creates a new instance of WeatherService
 func NewWeatherService(apiKey string) IWeatherService {

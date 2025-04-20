@@ -17,16 +17,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { compareReports, ComparisonResult } from "@/lib/api";
+import { handleApiError } from "@/lib/api/utils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export default function ComparisonClient() {
   const searchParams = useSearchParams();
-  const report1Id = searchParams.get('report1');
-  const report2Id = searchParams.get('report2');
-  
+  const report1Id = searchParams.get("report1");
+  const report2Id = searchParams.get("report2");
+
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function ComparisonClient() {
   useEffect(() => {
     const fetchComparison = async () => {
       if (!report1Id || !report2Id) {
-        setError('Two report IDs are required for comparison');
+        setError("Two report IDs are required for comparison");
         setLoading(false);
         return;
       }
@@ -47,9 +47,8 @@ export default function ComparisonClient() {
         });
         setComparison(result);
       } catch (err) {
-        console.error('Failed to compare reports:', err);
-        setError('Failed to compare the selected reports');
-        toast.error('Failed to compare reports');
+        handleApiError(err, "Failed to compare reports");
+        setError("Failed to compare the selected reports");
       } finally {
         setLoading(false);
       }
@@ -71,7 +70,7 @@ export default function ComparisonClient() {
     return (
       <div className="max-w-4xl mx-auto text-center py-8">
         <h1 className="text-3xl font-bold mb-4">Error</h1>
-        <p className="mb-6">{error || 'Failed to load comparison data'}</p>
+        <p className="mb-6">{error || "Failed to load comparison data"}</p>
         <Button asChild>
           <Link href="/history">Back to History</Link>
         </Button>

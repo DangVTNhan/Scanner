@@ -22,6 +22,7 @@ The project is organized into two main directories:
 - Node.js 18 or later
 - MongoDB
 - OpenWeather API key
+- Docker version 28.0.4 or later
 
 ## Setup Instructions
 
