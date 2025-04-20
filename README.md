@@ -231,12 +231,21 @@ POST /api/reports/compare
 
 ## Implementation Details
 
+- Docker support for easy deployment and scaling
+- Makefile and setup script for simplifying common development tasks
+
 ### Backend
 
 - Implemented in Golang with a clean architecture approach
 - Uses MongoDB for data storage
 - Integrates with OpenWeather API for weather data
+- Caching mechanism for weather data to reduce API calls (singleflight)
+- Dependency injection for better modularity and testability
 - RESTful API design with proper error handling
+- CORS middleware for handling cross-origin requests
+- Swagger documentation for API endpoints
+- Extensive test suite using Go's testing package
+- Environment variables for configuration (e.g., API keys, database connection strings)
 
 ### Frontend
 
@@ -245,3 +254,4 @@ POST /api/reports/compare
 - Responsive design for mobile and desktop
 - Client-side form validation and error handling
 - Comprehensive test suite using Jest and React Testing Library
+- Environment variables for API configuration
