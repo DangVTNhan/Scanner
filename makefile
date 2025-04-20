@@ -1,4 +1,4 @@
-.PHONY: run-be run-fe install-fe deps-be build-be clean docker-build docker-up docker-down
+.PHONY: run-be run-fe install-fe deps-be build-be clean docker-build docker-up docker-down test-be
 
 # Backend
 run-be:
@@ -19,6 +19,9 @@ run-fe:
 
 build-fe:
 	cd fe && npm run build
+
+test-be:
+	cd be && go test ./...
 
 # Combined
 run: run-be run-fe

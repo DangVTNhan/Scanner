@@ -46,7 +46,6 @@ func (s *ReportService) GenerateReport(ctx context.Context, req *request.ReportR
 
 	// Check if a valid weather cache exists
 	cache, err := s.weatherCacheRepo.FindWeatherCacheByTimestamp(ctx, timestamp, 1)
-	cache = nil
 	if err == nil && cache != nil {
 		return &models.WeatherReport{
 			Timestamp:   timestamp,
