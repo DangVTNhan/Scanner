@@ -16,12 +16,12 @@ import (
 
 // MongoReportRepository implements the IReportRepository interface for MongoDB
 type MongoReportRepository struct {
-	db         *mongo.Database
-	collection *mongo.Collection
+	db         IDatabase
+	collection ICollection
 }
 
 // NewMongoReportRepository creates a new instance of MongoReportRepository
-func NewMongoReportRepository(db *mongo.Database) repository.IReportRepository {
+func NewMongoReportRepository(db IDatabase) repository.IReportRepository {
 	return &MongoReportRepository{
 		db:         db,
 		collection: db.Collection("reports"),

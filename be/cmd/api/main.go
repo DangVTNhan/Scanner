@@ -45,10 +45,12 @@ func main() {
 
 	// Initialize services
 	db := client.Database(config.DatabaseName)
+	// Wrap the database with our interface wrapper
+	dbWrapper := mongodb.NewMongoDatabaseWrapper(db)
 
 	// Initialize repositories
-	reportRepository := mongodb.NewMongoReportRepository(db)
-	weatherCacheRepository := mongodb.NewMongoWeatherCacheRepository(db)
+	reportRepository := mongodb.NewMongoReportRepository(dbWrapper)
+	weatherCacheRepository := mongodb.NewMongoWeatherCacheRepository(dbWrapper)
 
 	// Initialize weather service with caching
 	weatherService := openweather.NewWeatherService(config.OpenWeatherAPIKey)
