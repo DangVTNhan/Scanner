@@ -2,6 +2,7 @@ package configs
 
 import (
 	"os"
+	"strings"
 )
 
 // Config holds the application configuration
@@ -24,14 +25,28 @@ type CORSConfig struct {
 
 // LoadConfig loads the configuration from environment variables
 func LoadConfig() *Config {
-	// Default CORS configuration
+	// Default CORS allowed origins
+	defaultAllowedOrigins := []string{
+		"http://localhost:3000",
+		"http://frontend:3000",
+		"http://host.docker.internal:3000",
+		"*", // Allow any origin for development
+	}
+
+	// Get allowed origins from environment variable
+	allowedOriginsEnv := os.Getenv("CORS_ALLOWED_ORIGINS")
+	allowedOrigins := defaultAllowedOrigins
+	if allowedOriginsEnv != "" {
+		// Split by comma and trim spaces
+		allowedOrigins = strings.Split(allowedOriginsEnv, ",")
+		for i, origin := range allowedOrigins {
+			allowedOrigins[i] = strings.TrimSpace(origin)
+		}
+	}
+
+	// CORS configuration
 	corsConfig := CORSConfig{
-		AllowedOrigins: []string{
-			"http://localhost:3000",
-			"http://frontend:3000",
-			"http://host.docker.internal:3000",
-			"*", // Allow any origin for development
-		},
+		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Content-Type", "Authorization", "X-Requested-With"},
 		MaxAge:         3600,

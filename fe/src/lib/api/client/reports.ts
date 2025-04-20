@@ -11,6 +11,7 @@ import {
   ReportRequest,
   WeatherReport,
 } from "../types";
+import { processApiResponse } from "../utils";
 
 /**
  * Generate a new weather report
@@ -26,11 +27,10 @@ export async function generateReport(
     body: JSON.stringify(request),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to generate report: ${response.statusText}`);
-  }
-
-  return response.json();
+  return processApiResponse<WeatherReport>(
+    response,
+    "Failed to generate report"
+  );
 }
 
 /**
@@ -40,11 +40,10 @@ export async function generateReport(
 export async function getAllReports(): Promise<WeatherReport[]> {
   const response = await fetch(`${API_BASE_URL}/reports`, defaultOptions);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch reports: ${response.statusText}`);
-  }
-
-  return response.json();
+  return processApiResponse<WeatherReport[]>(
+    response,
+    "Failed to fetch reports"
+  );
 }
 
 /**
@@ -80,13 +79,10 @@ export async function getPaginatedReports(
 
   const response = await fetch(url, defaultOptions);
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch paginated reports: ${response.statusText}`
-    );
-  }
-
-  return response.json();
+  return processApiResponse<PaginatedReportsResponse>(
+    response,
+    "Failed to fetch paginated reports"
+  );
 }
 
 /**
@@ -97,11 +93,7 @@ export async function getPaginatedReports(
 export async function getReportById(id: string): Promise<WeatherReport> {
   const response = await fetch(`${API_BASE_URL}/reports/${id}`, defaultOptions);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch report: ${response.statusText}`);
-  }
-
-  return response.json();
+  return processApiResponse<WeatherReport>(response, "Failed to fetch report");
 }
 
 /**
@@ -118,9 +110,8 @@ export async function compareReports(
     body: JSON.stringify(request),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to compare reports: ${response.statusText}`);
-  }
-
-  return response.json();
+  return processApiResponse<ComparisonResult>(
+    response,
+    "Failed to compare reports"
+  );
 }

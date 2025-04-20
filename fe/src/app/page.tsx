@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { generateReport, WeatherReport } from "@/lib/api";
+import { handleApiError } from "@/lib/api/utils";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -43,8 +44,7 @@ export default function Home() {
       setReport(newReport);
       toast.success("Weather report generated successfully");
     } catch (error) {
-      console.error("Failed to generate report:", error);
-      toast.error("Failed to generate weather report");
+      handleApiError(error, "Failed to generate weather report");
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,16 @@
  */
 
 /**
+ * Standardized API response structure
+ */
+export interface ApiResponse<T> {
+  message: string;    // Human-readable message about the response
+  status: string;     // Status of the response (success, error)
+  errorCode: string;  // Error code (empty if status is success)
+  data: T;            // Response data
+}
+
+/**
  * Weather report data structure
  */
 export interface WeatherReport {
