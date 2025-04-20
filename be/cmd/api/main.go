@@ -41,8 +41,6 @@ func main() {
 		}
 	}()
 
-	// Initialize services
-	db := client.Database(config.DatabaseName)
 	// Wrap the database with our interface wrapper
 	dbWrapper := mongodb.NewMongoDatabaseWrapper(db)
 
