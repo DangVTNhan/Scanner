@@ -18,10 +18,10 @@ The project is organized into two main directories:
 
 ## Prerequisites
 
-- Go 1.24 or later
-- Node.js 18 or later
-- MongoDB
-- OpenWeather API key
+- Go 1.24 or later (install at: https://go.dev/doc/install)
+- Node.js 18 or later (install at:https://nodejs.org/en/download/)
+- MongoDB (recommend using Docker)
+- OpenWeather API key (Register One Call API 3.0: https://openweathermap.org/api/one-call-3)
 - Docker version 28.0.4 or later
 
 ## Setup Instructions
@@ -61,6 +61,8 @@ OPENWEATHER_API_KEY=your_api_key
 # Edit the .env file
 OPENWEATHER_API_KEY=your_api_key
 ```
+
+By default, docker compose will load the `.env` file automatically for environment variables.
 
 2. Build and run the application using Docker Compose:
 
