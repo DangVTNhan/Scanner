@@ -1,4 +1,4 @@
-.PHONY: run-be run-fe install-fe deps-be build-be clean docker-build docker-up docker-down test-be
+.PHONY: run-be run-fe install-fe deps-be build-be clean docker-build docker-up docker-down test-be test-be-short test-be-db
 
 # Backend
 run-be:
@@ -22,6 +22,12 @@ build-fe:
 
 test-be:
 	cd be && go test ./...
+
+test-be-short:
+	cd be && go test -short ./...
+
+test-be-db:
+	cd be && go test ./internal/database -v
 
 # Combined
 run: run-be run-fe

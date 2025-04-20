@@ -11,14 +11,13 @@ import (
 	"time"
 
 	"github.com/DangVTNhan/Scanner/be/configs"
+	"github.com/DangVTNhan/Scanner/be/internal/database"
 	"github.com/DangVTNhan/Scanner/be/internal/handlers"
 	"github.com/DangVTNhan/Scanner/be/internal/middleware"
 	"github.com/DangVTNhan/Scanner/be/internal/models/repository/mongodb"
 	"github.com/DangVTNhan/Scanner/be/internal/services"
 	"github.com/DangVTNhan/Scanner/be/pkg/openweather"
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -29,15 +28,14 @@ func main() {
 		log.Fatal("OPENWEATHER_API_KEY environment variable is required")
 	}
 
-	// Connect to MongoDB
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.MongoURI))
+	// Connect to MongoDB and initialize database with indexes
+	client, db, err := database.InitDatabase(config.MongoURI, config.DatabaseName)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 		if err = client.Disconnect(ctx); err != nil {
 			log.Fatalf("Failed to disconnect from MongoDB: %v", err)
 		}
@@ -100,7 +98,7 @@ func main() {
 	<-c
 
 	// Create a deadline to wait for
-	ctx, cancel = context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	// Doesn't block if no connections, but will otherwise wait until the timeout deadline
