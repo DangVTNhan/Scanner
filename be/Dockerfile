@@ -22,7 +22,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/bin/api .
+COPY --from=builder /app/bin/api /app/api
 
 # Expose port 8080
 EXPOSE 8080
@@ -30,4 +30,4 @@ EXPOSE 8080
 # Environment variables will be provided by docker-compose
 
 # Command to run the executable
-CMD ["./api"]
+CMD ["/app/api"]

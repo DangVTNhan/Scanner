@@ -27,6 +27,10 @@ services:
       - DB_NAME=weather_reports
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
       - PORT=8080
+      - ENVIRONMENT=${ENVIRONMENT:-dev}
+    # For development, uncomment this to enable hot reloading
+    # volumes:
+    #   - ./be:/app/src
     networks:
       - app-network
 

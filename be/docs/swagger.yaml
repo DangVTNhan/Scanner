@@ -1,0 +1,304 @@
+basePath: /api
+definitions:
+  docs.WeatherReport:
+    properties:
+      cloudCover:
+        description: in %
+        example: 30
+        type: number
+      createdAt:
+        example: "2023-04-18T12:05:00Z"
+        type: string
+      humidity:
+        description: in %
+        example: 60
+        type: number
+      id:
+        example: 60d21b4667d0d8992e89e9e5
+        type: string
+      pressure:
+        description: in hPa
+        example: 1013.2
+        type: number
+      temperature:
+        description: in Celsius
+        example: 25.5
+        type: number
+      timestamp:
+        example: "2023-04-18T12:00:00Z"
+        type: string
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport:
+    properties:
+      cloudCover:
+        description: in %
+        type: number
+      createdAt:
+        type: string
+      humidity:
+        description: in %
+        type: number
+      id:
+        type: string
+      pressure:
+        description: in hPa
+        type: number
+      temperature:
+        description: in Celsius
+        type: number
+      timestamp:
+        type: string
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models_request.ComparisonRequest:
+    properties:
+      reportId1:
+        type: string
+      reportId2:
+        type: string
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models_request.ReportRequest:
+    properties:
+      timestamp:
+        description: 'Optional: if not provided, current time will be used'
+        type: string
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse:
+    properties:
+      data:
+        description: Response data (can be any type)
+      errorCode:
+        description: Error code (empty if status is success)
+        type: string
+      message:
+        description: Human-readable message about the response
+        type: string
+      status:
+        description: Status of the response (success, error)
+        type: string
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models_response.ComparisonResult:
+    properties:
+      deviation:
+        $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.Deviation'
+      report1:
+        $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport'
+      report2:
+        $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport'
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models_response.Deviation:
+    properties:
+      cloudCover:
+        type: number
+      humidity:
+        type: number
+      pressure:
+        type: number
+      temperature:
+        type: number
+    type: object
+  github_com_DangVTNhan_Scanner_be_internal_models_response.PaginatedReportsResponse:
+    properties:
+      reports:
+        description: List of reports for the current page
+        items:
+          $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport'
+        type: array
+      totalCount:
+        description: Total number of reports (for calculating total pages)
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: nhan.dangviettrung@gmail.com
+    name: API Support
+  description: API for generating and retrieving weather reports for Changi Airport
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Changi Airport Weather Report API
+  version: "1.0"
+paths:
+  /reports:
+    get:
+      description: Get all weather reports (legacy endpoint, no pagination)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reports retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/docs.WeatherReport'
+                  type: array
+              type: object
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+      summary: Get all weather reports
+      tags:
+      - reports
+    post:
+      consumes:
+      - application/json
+      description: Generate a new weather report for Changi Airport at a specific
+        time
+      parameters:
+      - description: Report request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_request.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Report generated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/docs.WeatherReport'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+      summary: Generate a new weather report
+      tags:
+      - reports
+  /reports/{id}:
+    get:
+      description: Get a specific weather report by its ID
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Report retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/docs.WeatherReport'
+              type: object
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+      summary: Get a weather report by ID
+      tags:
+      - reports
+  /reports/compare:
+    post:
+      consumes:
+      - application/json
+      description: Compare two weather reports and calculate the differences
+      parameters:
+      - description: Comparison request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_request.ComparisonRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reports compared successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.ComparisonResult'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+      summary: Compare two weather reports
+      tags:
+      - reports
+  /reports/paginated:
+    get:
+      description: Get paginated weather reports with optional filtering by time range
+      parameters:
+      - description: Limit number of results
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by start time (RFC3339 format)
+        in: query
+        name: fromTime
+        type: string
+      - description: Filter by end time (RFC3339 format)
+        in: query
+        name: toTime
+        type: string
+      - description: Field to sort by
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc or desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reports retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.PaginatedReportsResponse'
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse'
+      summary: Get paginated weather reports
+      tags:
+      - reports
+swagger: "2.0"
