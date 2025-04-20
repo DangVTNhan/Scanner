@@ -20,6 +20,12 @@ run-fe:
 build-fe:
 	cd fe && npm run build
 
+test-fe:
+	cd fe && npm test
+
+test-fe-coverage:
+	cd fe && npm run test:coverage
+
 test-be:
 	cd be && go test ./...
 
