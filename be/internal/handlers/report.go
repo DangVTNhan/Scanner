@@ -80,8 +80,9 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 
 	// Create request object
 	req := &request.PaginatedReportsRequest{
-		LastID:     query.Get("lastId"),
 		IsFiltered: false,
+		SortBy:     query.Get("sortBy"),
+		SortOrder:  request.SortOrder(query.Get("sortOrder")),
 	}
 
 	// Parse limit
@@ -92,6 +93,16 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		req.Limit = limit
+	}
+
+	// Parse offset
+	if offsetStr := query.Get("offset"); offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil || offset < 0 {
+			respondWithError(w, "Invalid offset parameter", errors.ErrCodeInvalidParameters, nil, http.StatusBadRequest)
+			return
+		}
+		req.Offset = offset
 	}
 
 	// Parse from time

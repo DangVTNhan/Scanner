@@ -67,6 +67,22 @@ func (r *MongoReportRepository) FindPaginatedReports(ctx context.Context, req *r
 
 	// Build the filter
 	filter := bson.M{}
+	// Set up options for sorting and limiting
+	// Determine sort field and order
+	sortField := "timestamp" // Default sort field
+	if req.SortBy != "" {
+		sortField = req.SortBy
+	}
+
+	sortOrder := -1 // Default sort order (descending)
+	if req.SortOrder == request.SortOrderAsc {
+		sortOrder = 1 // Ascending order
+	}
+
+	opts := options.Find().
+		SetSort(bson.D{{Key: sortField, Value: sortOrder}}).
+		SetSkip(int64(req.Offset)).
+		SetLimit(int64(limit + 1)) // Fetch one extra to check if there are more
 
 	// Add time range filter if provided
 	if !req.FromTime.IsZero() || !req.ToTime.IsZero() {
@@ -80,24 +96,6 @@ func (r *MongoReportRepository) FindPaginatedReports(ctx context.Context, req *r
 		filter["timestamp"] = timeFilter
 	}
 
-	// Add cursor-based pagination if lastID is provided
-	if req.LastID != "" {
-		// Try to convert to ObjectID first
-		lastObjectID, err := primitive.ObjectIDFromHex(req.LastID)
-		if err != nil {
-			// If not a valid ObjectID, use string ID directly
-			filter["_id"] = bson.M{"$lt": req.LastID}
-		} else {
-			// If it's a valid ObjectID, use it
-			filter["_id"] = bson.M{"$lt": lastObjectID}
-		}
-	}
-
-	// Set up options for sorting and limiting
-	opts := options.Find().
-		SetSort(bson.D{{Key: "_id", Value: -1}}).
-		SetLimit(int64(limit + 1)) // Fetch one extra to check if there are more
-
 	// Execute the query
 	cursor, err := r.collection.Find(ctx, filter, opts)
 	if err != nil {
@@ -106,41 +104,26 @@ func (r *MongoReportRepository) FindPaginatedReports(ctx context.Context, req *r
 	defer cursor.Close(ctx)
 
 	// Decode the results
-	var reports []models.WeatherReport
+	reports := []models.WeatherReport{}
 	if err := cursor.All(ctx, &reports); err != nil {
 		return nil, fmt.Errorf("failed to decode reports: %w", err)
 	}
 
-	// Check if there are more results
-	hasMore := false
-	if len(reports) > limit {
-		hasMore = true
+	// If we fetched one extra item to check for more pages, remove it
+	if len(reports) > limit && limit > 0 {
 		reports = reports[:limit] // Remove the extra item
 	}
 
-	// Calculate pagination metadata
+	// Count total documents for pagination using the same filter
+	totalCount, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count reports: %w", err)
+	}
+
+	// Create response with pagination metadata
 	response := &response.PaginatedReportsResponse{
-		Reports:     reports,
-		HasMore:     hasMore,
-		CurrentPage: 1, // Default to 1 for cursor-based pagination
-	}
-
-	// If we're using cursor-based pagination, calculate the current page
-	if req.LastID != "" {
-		response.CurrentPage = 2 // At least page 2 if lastID is provided
-	}
-
-	// Calculate from and to numbers
-	response.FromNumber = (response.CurrentPage-1)*limit + 1
-	response.ToNumber = response.FromNumber + len(reports) - 1
-
-	// Get total count only if not filtered
-	if !req.IsFiltered {
-		totalCount, err := r.collection.CountDocuments(ctx, bson.M{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to count reports: %w", err)
-		}
-		response.TotalCount = int(totalCount)
+		Reports:    reports,
+		TotalCount: int(totalCount),
 	}
 
 	return response, nil

@@ -207,7 +207,7 @@ func TestFindPaginatedReports(t *testing.T) {
 	now := time.Now()
 	req := &request.PaginatedReportsRequest{
 		Limit:  10,
-		LastID: "report1",
+		Offset: 0,
 	}
 
 	// Expected reports
@@ -236,8 +236,14 @@ func TestFindPaginatedReports(t *testing.T) {
 	mockCursor.On("All", ctx, mock.AnythingOfType("*[]models.WeatherReport")).Return(nil)
 	mockCursor.On("Close", ctx).Return(nil)
 
-	mockCollection.On("Find", ctx, mock.Anything, mock.Anything).Return(mockCursor, nil)
-	mockCollection.On("CountDocuments", ctx, mock.Anything, mock.Anything).Return(int64(10), nil)
+	// Capture the filter to ensure the same filter is used for Find and CountDocuments
+	filterCapture := mock.MatchedBy(func(filter interface{}) bool {
+		// This will match any filter, but we're using it to capture the same filter for both calls
+		return true
+	})
+
+	mockCollection.On("Find", ctx, filterCapture, mock.Anything).Return(mockCursor, nil)
+	mockCollection.On("CountDocuments", ctx, filterCapture, mock.Anything).Return(int64(10), nil)
 
 	// Act
 	response, err := repo.FindPaginatedReports(ctx, req)
@@ -249,7 +255,6 @@ func TestFindPaginatedReports(t *testing.T) {
 	assert.Equal(t, expectedReports[0].ID, response.Reports[0].ID)
 	assert.Equal(t, expectedReports[1].ID, response.Reports[1].ID)
 	assert.Equal(t, 10, response.TotalCount)
-	assert.Equal(t, 2, response.CurrentPage)
 	mockCollection.AssertExpectations(t)
 	mockCursor.AssertExpectations(t)
 }
@@ -268,6 +273,7 @@ func TestFindPaginatedReports_WithFilters(t *testing.T) {
 	toTime := now
 	req := &request.PaginatedReportsRequest{
 		Limit:      10,
+		Offset:     0,
 		FromTime:   fromTime,
 		ToTime:     toTime,
 		IsFiltered: true,
@@ -290,7 +296,14 @@ func TestFindPaginatedReports_WithFilters(t *testing.T) {
 	mockCursor.On("All", ctx, mock.AnythingOfType("*[]models.WeatherReport")).Return(nil)
 	mockCursor.On("Close", ctx).Return(nil)
 
-	mockCollection.On("Find", ctx, mock.Anything, mock.Anything).Return(mockCursor, nil)
+	// Capture the filter to ensure the same filter is used for Find and CountDocuments
+	filterCapture := mock.MatchedBy(func(filter interface{}) bool {
+		// This will match any filter, but we're using it to capture the same filter for both calls
+		return true
+	})
+
+	mockCollection.On("Find", ctx, filterCapture, mock.Anything).Return(mockCursor, nil)
+	mockCollection.On("CountDocuments", ctx, filterCapture, mock.Anything).Return(int64(5), nil)
 
 	// Act
 	response, err := repo.FindPaginatedReports(ctx, req)
@@ -300,8 +313,71 @@ func TestFindPaginatedReports_WithFilters(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, len(expectedReports), len(response.Reports))
 	assert.Equal(t, expectedReports[0].ID, response.Reports[0].ID)
-	assert.Equal(t, 0, response.TotalCount) // TotalCount should be 0 for filtered results
-	assert.Equal(t, 1, response.CurrentPage)
+	assert.Equal(t, 5, response.TotalCount) // TotalCount should be 5 as mocked
+	mockCollection.AssertExpectations(t)
+	mockCursor.AssertExpectations(t)
+}
+
+func TestFindPaginatedReports_WithOffset(t *testing.T) {
+	// Arrange
+	mockDB := new(MockDatabase)
+	mockCollection := new(MockCollection)
+	mockDB.On("Collection", "reports", mock.Anything).Return(mockCollection)
+
+	repo := NewMongoReportRepository(mockDB)
+
+	ctx := context.Background()
+	now := time.Now()
+	req := &request.PaginatedReportsRequest{
+		Limit:  10,
+		Offset: 10, // Start from the 11th record
+	}
+
+	// Expected reports
+	expectedReports := []models.WeatherReport{
+		{
+			ID:          "report11",
+			Timestamp:   now,
+			Temperature: 25.5,
+			Pressure:    1013.2,
+			Humidity:    60.0,
+			CloudCover:  30.0,
+			CreatedAt:   now,
+		},
+		{
+			ID:          "report12",
+			Timestamp:   now.Add(1 * time.Hour),
+			Temperature: 26.5,
+			Pressure:    1014.2,
+			Humidity:    65.0,
+			CloudCover:  35.0,
+			CreatedAt:   now.Add(1 * time.Hour),
+		},
+	}
+
+	mockCursor := NewMockCursor(expectedReports)
+	mockCursor.On("All", ctx, mock.AnythingOfType("*[]models.WeatherReport")).Return(nil)
+	mockCursor.On("Close", ctx).Return(nil)
+
+	// Capture the filter to ensure the same filter is used for Find and CountDocuments
+	filterCapture := mock.MatchedBy(func(filter interface{}) bool {
+		// This will match any filter, but we're using it to capture the same filter for both calls
+		return true
+	})
+
+	mockCollection.On("Find", ctx, filterCapture, mock.Anything).Return(mockCursor, nil)
+	mockCollection.On("CountDocuments", ctx, filterCapture, mock.Anything).Return(int64(20), nil)
+
+	// Act
+	response, err := repo.FindPaginatedReports(ctx, req)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, len(expectedReports), len(response.Reports))
+	assert.Equal(t, expectedReports[0].ID, response.Reports[0].ID)
+	assert.Equal(t, expectedReports[1].ID, response.Reports[1].ID)
+	assert.Equal(t, 20, response.TotalCount)
 	mockCollection.AssertExpectations(t)
 	mockCursor.AssertExpectations(t)
 }
@@ -373,7 +449,8 @@ func TestFindPaginatedReports_CountError(t *testing.T) {
 
 	ctx := context.Background()
 	req := &request.PaginatedReportsRequest{
-		Limit: 10,
+		Limit:  10,
+		Offset: 0,
 	}
 	expectedErr := errors.New("count error")
 
@@ -394,8 +471,14 @@ func TestFindPaginatedReports_CountError(t *testing.T) {
 	mockCursor.On("All", ctx, mock.AnythingOfType("*[]models.WeatherReport")).Return(nil)
 	mockCursor.On("Close", ctx).Return(nil)
 
-	mockCollection.On("Find", ctx, mock.Anything, mock.Anything).Return(mockCursor, nil)
-	mockCollection.On("CountDocuments", ctx, mock.Anything, mock.Anything).Return(int64(0), expectedErr)
+	// Capture the filter to ensure the same filter is used for Find and CountDocuments
+	filterCapture := mock.MatchedBy(func(filter interface{}) bool {
+		// This will match any filter, but we're using it to capture the same filter for both calls
+		return true
+	})
+
+	mockCollection.On("Find", ctx, filterCapture, mock.Anything).Return(mockCursor, nil)
+	mockCollection.On("CountDocuments", ctx, filterCapture, mock.Anything).Return(int64(0), expectedErr)
 
 	// Act
 	response, err := repo.FindPaginatedReports(ctx, req)

@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getPaginatedReports, PaginatedReportsResponse } from "@/lib/api";
+import { SortOrder } from "@/lib/api/types";
 import { handleApiError } from "@/lib/api/utils";
 import {
   ArrowRight,
@@ -59,15 +60,20 @@ export default function HistoryClient() {
     useState<PaginatedReportsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [sortBy, setSortBy] = useState<string>("timestamp");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Get URL parameters
-  const lastId = searchParams.get("lastId") || undefined;
+  const offsetStr = searchParams.get("offset") || "0";
+  const offset = parseInt(offsetStr, 10);
   const fromTime = searchParams.get("fromTime") || "";
   const toTime = searchParams.get("toTime") || "";
-  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const sortByParam = searchParams.get("sortBy") || "timestamp";
+  const sortOrderParam = (searchParams.get("sortOrder") as SortOrder) || "desc";
 
   // Form for filters
   const form = useForm<FilterForm>({
@@ -77,28 +83,31 @@ export default function HistoryClient() {
     },
   });
 
-  // Set form values from URL parameters on initial load
+  // Set form values and sort state from URL parameters on initial load
   useEffect(() => {
     form.reset({
       fromTime,
       toTime,
     });
-  }, [form, fromTime, toTime]);
+    setSortBy(sortByParam);
+    setSortOrder(sortOrderParam);
+  }, [form, fromTime, toTime, sortByParam, sortOrderParam]);
 
   const limit = 10; // Number of items per page
 
-  // Update URL with current filter and pagination state
+  // Update URL with current filter, sorting, and pagination state
   const updateUrl = useCallback(
     (params: {
-      lastId?: string;
+      offset?: number;
       fromTime?: string;
       toTime?: string;
-      page?: number;
+      sortBy?: string;
+      sortOrder?: SortOrder;
     }) => {
       const newParams = new URLSearchParams();
 
-      if (params.lastId) {
-        newParams.set("lastId", params.lastId);
+      if (params.offset && params.offset > 0) {
+        newParams.set("offset", params.offset.toString());
       }
 
       if (params.fromTime) {
@@ -109,8 +118,12 @@ export default function HistoryClient() {
         newParams.set("toTime", params.toTime);
       }
 
-      if (params.page && params.page > 1) {
-        newParams.set("page", params.page.toString());
+      if (params.sortBy) {
+        newParams.set("sortBy", params.sortBy);
+      }
+
+      if (params.sortOrder) {
+        newParams.set("sortOrder", params.sortOrder);
       }
 
       const newUrl = newParams.toString() ? `?${newParams.toString()}` : "";
@@ -126,11 +139,19 @@ export default function HistoryClient() {
       setLoading(true);
 
       // Prepare request parameters
-      const params: any = { limit };
+      const params: any = {
+        limit,
+        sortBy,
+        sortOrder,
+      };
 
-      if (lastId) {
-        params.lastId = lastId;
+      // Set offset for pagination
+      if (offset > 0) {
+        params.offset = offset;
       }
+
+      // Update current offset state
+      setCurrentOffset(offset);
 
       if (fromTime) {
         try {
@@ -156,7 +177,7 @@ export default function HistoryClient() {
     } finally {
       setLoading(false);
     }
-  }, [lastId, fromTime, toTime, limit]);
+  }, [offset, fromTime, toTime, limit, sortBy, sortOrder]);
 
   // Initial data fetch
   useEffect(() => {
@@ -167,9 +188,11 @@ export default function HistoryClient() {
   const onSubmitFilter = (data: FilterForm) => {
     // Update URL with filter parameters and reset pagination
     updateUrl({
+      offset: 0, // Reset to first page when applying filters
       fromTime: data.fromTime,
       toTime: data.toTime,
-      page: 1,
+      sortBy,
+      sortOrder,
     });
   };
 
@@ -180,39 +203,51 @@ export default function HistoryClient() {
       toTime: "",
     });
 
-    // Clear URL parameters
+    // Clear URL parameters and reset pagination state
     router.push("/history", { scroll: false });
   };
 
   // Handle next page
   const handleNextPage = () => {
-    if (
-      paginatedData &&
-      paginatedData.hasMore &&
-      paginatedData.reports.length > 0
-    ) {
-      const newLastId =
-        paginatedData.reports[paginatedData.reports.length - 1].id;
+    const info = getPaginationInfo();
+    if (info && info.currentPage < info.totalPages) {
+      // Calculate the new offset for the next page
+      const newOffset = currentOffset + limit;
 
-      // Update URL with new lastId and increment page
+      // Update URL with new offset
       updateUrl({
-        lastId: newLastId,
+        offset: newOffset,
         fromTime: form.getValues("fromTime"),
         toTime: form.getValues("toTime"),
-        page: currentPage + 1,
+        sortBy,
+        sortOrder,
       });
     }
   };
 
   // Handle previous page
   const handlePreviousPage = () => {
-    // For cursor-based pagination, going back is tricky
-    // For simplicity, we'll just go back to the first page
-    updateUrl({
-      fromTime: form.getValues("fromTime"),
-      toTime: form.getValues("toTime"),
-      page: 1,
-    });
+    if (currentOffset > 0) {
+      // Calculate the new offset for the previous page
+      const newOffset = Math.max(0, currentOffset - limit);
+
+      // Update URL with new offset
+      updateUrl({
+        offset: newOffset,
+        fromTime: form.getValues("fromTime"),
+        toTime: form.getValues("toTime"),
+        sortBy,
+        sortOrder,
+      });
+    } else {
+      // If we're already at the first page, just refresh
+      updateUrl({
+        fromTime: form.getValues("fromTime"),
+        toTime: form.getValues("toTime"),
+        sortBy,
+        sortOrder,
+      });
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -246,20 +281,33 @@ export default function HistoryClient() {
     );
   };
 
+  // Calculate pagination information
+  const getPaginationInfo = () => {
+    if (!paginatedData) return null;
+
+    const totalItems = paginatedData.totalCount;
+    const totalPages = Math.ceil(totalItems / limit);
+    const currentPage = Math.floor(currentOffset / limit) + 1;
+
+    return {
+      totalItems,
+      totalPages,
+      currentPage,
+      currentOffset,
+      itemsPerPage: limit,
+      displayedItems: paginatedData.reports.length,
+    };
+  };
+
   // Generate pagination text
   const getPaginationText = () => {
-    if (!paginatedData) return "";
+    const info = getPaginationInfo();
+    if (!info) return "";
 
-    const { fromNumber, toNumber, totalCount } = paginatedData;
+    const start = currentOffset + 1;
+    const end = currentOffset + info.displayedItems;
 
-    // Check if filtering is applied
-    const isFiltered = !!(fromTime || toTime);
-
-    if (isFiltered) {
-      return `${fromNumber}-${toNumber} of many recorded history`;
-    } else {
-      return `${fromNumber}-${toNumber} of ${totalCount} total records`;
-    }
+    return `${start}-${end} of ${info.totalItems} records`;
   };
 
   return (
@@ -403,7 +451,9 @@ export default function HistoryClient() {
                 Loading reports...
               </p>
             </div>
-          ) : !paginatedData || paginatedData.reports.length === 0 ? (
+          ) : !paginatedData ||
+            !paginatedData.reports ||
+            paginatedData.reports.length === 0 ? (
             <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-800">
               <CalendarDays className="size-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -421,11 +471,141 @@ export default function HistoryClient() {
                   <TableHeader className="bg-slate-50 dark:bg-slate-900">
                     <TableRow>
                       <TableHead className="w-12 text-center">Select</TableHead>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>Temperature (°C)</TableHead>
-                      <TableHead>Pressure (hPa)</TableHead>
-                      <TableHead>Humidity (%)</TableHead>
-                      <TableHead>Cloud Cover (%)</TableHead>
+                      <TableHead>
+                        <div
+                          className="flex items-center gap-1 cursor-pointer"
+                          onClick={() => {
+                            const newSortOrder =
+                              sortBy === "timestamp" && sortOrder === "desc"
+                                ? "asc"
+                                : "desc";
+                            setSortBy("timestamp");
+                            setSortOrder(newSortOrder as SortOrder);
+                            updateUrl({
+                              offset: 0,
+                              fromTime: form.getValues("fromTime"),
+                              toTime: form.getValues("toTime"),
+                              sortBy: "timestamp",
+                              sortOrder: newSortOrder as SortOrder,
+                            });
+                          }}
+                        >
+                          Timestamp
+                          {sortBy === "timestamp" && (
+                            <span className="ml-1">
+                              {sortOrder === "desc" ? "↓" : "↑"}
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div
+                          className="flex items-center gap-1 cursor-pointer"
+                          onClick={() => {
+                            const newSortOrder =
+                              sortBy === "temperature" && sortOrder === "desc"
+                                ? "asc"
+                                : "desc";
+                            setSortBy("temperature");
+                            setSortOrder(newSortOrder as SortOrder);
+                            updateUrl({
+                              offset: 0,
+                              fromTime: form.getValues("fromTime"),
+                              toTime: form.getValues("toTime"),
+                              sortBy: "temperature",
+                              sortOrder: newSortOrder as SortOrder,
+                            });
+                          }}
+                        >
+                          Temperature (°C)
+                          {sortBy === "temperature" && (
+                            <span className="ml-1">
+                              {sortOrder === "desc" ? "↓" : "↑"}
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div
+                          className="flex items-center gap-1 cursor-pointer"
+                          onClick={() => {
+                            const newSortOrder =
+                              sortBy === "pressure" && sortOrder === "desc"
+                                ? "asc"
+                                : "desc";
+                            setSortBy("pressure");
+                            setSortOrder(newSortOrder as SortOrder);
+                            updateUrl({
+                              offset: 0,
+                              fromTime: form.getValues("fromTime"),
+                              toTime: form.getValues("toTime"),
+                              sortBy: "pressure",
+                              sortOrder: newSortOrder as SortOrder,
+                            });
+                          }}
+                        >
+                          Pressure (hPa)
+                          {sortBy === "pressure" && (
+                            <span className="ml-1">
+                              {sortOrder === "desc" ? "↓" : "↑"}
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div
+                          className="flex items-center gap-1 cursor-pointer"
+                          onClick={() => {
+                            const newSortOrder =
+                              sortBy === "humidity" && sortOrder === "desc"
+                                ? "asc"
+                                : "desc";
+                            setSortBy("humidity");
+                            setSortOrder(newSortOrder as SortOrder);
+                            updateUrl({
+                              offset: 0,
+                              fromTime: form.getValues("fromTime"),
+                              toTime: form.getValues("toTime"),
+                              sortBy: "humidity",
+                              sortOrder: newSortOrder as SortOrder,
+                            });
+                          }}
+                        >
+                          Humidity (%)
+                          {sortBy === "humidity" && (
+                            <span className="ml-1">
+                              {sortOrder === "desc" ? "↓" : "↑"}
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div
+                          className="flex items-center gap-1 cursor-pointer"
+                          onClick={() => {
+                            const newSortOrder =
+                              sortBy === "cloudCover" && sortOrder === "desc"
+                                ? "asc"
+                                : "desc";
+                            setSortBy("cloudCover");
+                            setSortOrder(newSortOrder as SortOrder);
+                            updateUrl({
+                              offset: 0,
+                              fromTime: form.getValues("fromTime"),
+                              toTime: form.getValues("toTime"),
+                              sortBy: "cloudCover",
+                              sortOrder: newSortOrder as SortOrder,
+                            });
+                          }}
+                        >
+                          Cloud Cover (%)
+                          {sortBy === "cloudCover" && (
+                            <span className="ml-1">
+                              {sortOrder === "desc" ? "↓" : "↑"}
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -466,28 +646,119 @@ export default function HistoryClient() {
             </>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between border-t py-4">
-          <div className="text-sm text-muted-foreground">
-            {paginatedData && getPaginationText()}
+        <CardFooter className="flex flex-col md:flex-row justify-between items-center border-t py-4 gap-4">
+          <div className="text-sm text-muted-foreground flex flex-col md:flex-row md:items-center gap-2">
+            <div>{paginatedData && getPaginationText()}</div>
           </div>
-          <div className="flex space-x-2">
+
+          {/* Pagination Controls */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {/* Previous Button */}
             <Button
               variant="outline"
+              size="sm"
               onClick={handlePreviousPage}
-              disabled={loading || currentPage <= 1}
+              disabled={loading || currentOffset <= 0}
               className="flex items-center gap-1"
             >
-              <ChevronLeft className="size-4" />
-              Previous
+              <ChevronLeft className="size-3" />
+              Prev
             </Button>
+
+            {/* Page Numbers */}
+            {paginatedData && getPaginationInfo() && (
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const info = getPaginationInfo()!;
+                  const { currentPage, totalPages } = info;
+                  const pageButtons = [];
+
+                  // Function to create a page button
+                  const createPageButton = (
+                    pageNum: number,
+                    active: boolean = false
+                  ) => {
+                    return (
+                      <Button
+                        key={`page-${pageNum}`}
+                        variant={active ? "default" : "outline"}
+                        size="sm"
+                        className={`size-8 p-0 ${
+                          active ? "bg-blue-500 hover:bg-blue-600" : ""
+                        }`}
+                        onClick={() => {
+                          if (pageNum !== currentPage) {
+                            const newOffset = (pageNum - 1) * limit;
+                            updateUrl({
+                              offset: newOffset,
+                              fromTime: form.getValues("fromTime"),
+                              toTime: form.getValues("toTime"),
+                              sortBy,
+                              sortOrder,
+                            });
+                          }
+                        }}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  };
+
+                  // Show first page if we're not on it
+                  if (currentPage > 1) {
+                    pageButtons.push(createPageButton(1));
+
+                    // Add ellipsis if there's a gap
+                    if (currentPage > 2) {
+                      pageButtons.push(
+                        <div key="ellipsis-start" className="px-2">
+                          ...
+                        </div>
+                      );
+                    }
+                  }
+
+                  // Always show current page
+                  pageButtons.push(createPageButton(currentPage, true));
+
+                  // Show next 2 pages if they exist
+                  for (let i = 1; i <= 2; i++) {
+                    const pageNum = currentPage + i;
+                    if (pageNum <= totalPages) {
+                      pageButtons.push(createPageButton(pageNum));
+                    }
+                  }
+
+                  // If there are more pages after the 2 we've shown, add ellipsis and last page
+                  if (currentPage + 3 <= totalPages) {
+                    pageButtons.push(
+                      <div key="ellipsis" className="px-2">
+                        ...
+                      </div>
+                    );
+                    pageButtons.push(createPageButton(totalPages));
+                  }
+
+                  return pageButtons;
+                })()}
+              </div>
+            )}
+
+            {/* Next Button */}
             <Button
               variant="outline"
+              size="sm"
               onClick={handleNextPage}
-              disabled={loading || !paginatedData?.hasMore}
+              disabled={
+                loading ||
+                !paginatedData ||
+                getPaginationInfo()?.currentPage ===
+                  getPaginationInfo()?.totalPages
+              }
               className="flex items-center gap-1"
             >
               Next
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-3" />
             </Button>
           </div>
         </CardFooter>
