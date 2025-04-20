@@ -30,26 +30,29 @@ The project is organized into two main directories:
 
 #### Option 1: Using the setup script
 
-1. Run the setup script:
+1. Create a `.env` file in the root directory with the following content:
+
+```
+OPENWEATHER_API_KEY=your_api_key
+ENVIRONMENT=dev
+```
+
+Change `your_api_key` to your actual OpenWeather API key.
+
+If you need openweather api key, you can get it from [here](https://openweathermap.org/api/one-call-3) it required credit card information. Or you can DM me at (nhan.dangviettrung@gmail.com) to get a free api key.
+
+
+2. Run the setup script:
 
 ```bash
 ./setup.sh
 ```
 
-1.1 If you met permission denied error, run the following command:
+If you met permission denied error, run the following command:
 
 ```bash
 chmod +x setup.sh
 ```
-
-
-2. Edit the `.env` file to add your OpenWeather API key.
-```bash
-# Edit the .env file
-OPENWEATHER_API_KEY=your_api_key
-```
-
-2.1 If you need openweather api key, you can get it from [here](https://openweathermap.org/api/one-call-3) it required credit card information. Or you can DM me at (nhan.dangviettrung@gmail.com) to get a free api key.
 
 3. Access the application at http://localhost:3000
 
@@ -127,7 +130,7 @@ npm install
 
 2. Set up environment variables:
 
-Create a `.env.local` file in the `fe` directory with the following content:
+Create a `.env.local` file in the `fe` directory with the following content: (if not provided it will use the default value: http://localhost:8080/api)
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
