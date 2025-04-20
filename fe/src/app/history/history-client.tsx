@@ -13,6 +13,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,6 +29,20 @@ import {
 } from "@/components/ui/table";
 import { getPaginatedReports, PaginatedReportsResponse } from "@/lib/api";
 import { handleApiError } from "@/lib/api/utils";
+import {
+  ArrowRight,
+  CalendarClock,
+  CalendarDays,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CloudSun,
+  Filter,
+  History,
+  Plane,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -248,18 +263,47 @@ export default function HistoryClient() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Weather Report History</h1>
-        <Button onClick={handleCompare} disabled={selectedReports.length !== 2}>
-          Compare Selected Reports
-        </Button>
+    <div className="w-full max-w-6xl mx-auto px-4">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 mb-8 p-8 md:p-12">
+        <div className="absolute inset-0 bg-grid-slate-200 [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
+        <div className="absolute -top-24 -right-20 opacity-20">
+          <History className="size-64 text-blue-500" />
+        </div>
+        <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center rounded-lg bg-blue-50/50 dark:bg-blue-900/30 px-3 py-1 text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+              <Plane className="mr-1 size-4" /> Changi Airport Weather System
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Weather Report History
+            </h1>
+          </div>
+          <div className="flex-shrink-0 hidden md:block">
+            <Button
+              onClick={handleCompare}
+              disabled={selectedReports.length !== 2}
+              className="bg-blue-500 hover:bg-blue-600 transition-all duration-200"
+            >
+              <span className="flex items-center gap-2">
+                Compare Selected Reports
+                <ArrowRight className="size-4" />
+              </span>
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Card className="mb-6">
+      {/* Filter Card */}
+      <Card className="mb-8 overflow-hidden border-blue-100 dark:border-blue-900">
         <CardHeader>
-          <CardTitle>Filter Reports</CardTitle>
-          <CardDescription>Filter reports by time range.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="size-5 text-blue-500" />
+            Filter Reports
+          </CardTitle>
+          <CardDescription>
+            Filter reports by time range to find specific weather data.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -273,7 +317,10 @@ export default function HistoryClient() {
                   name="fromTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>From Date & Time</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <CalendarClock className="size-4 text-blue-500" />
+                        From Date & Time
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="datetime-local"
@@ -281,6 +328,9 @@ export default function HistoryClient() {
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Start date for filtering reports
+                      </FormDescription>
                     </FormItem>
                   )}
                 />
@@ -289,7 +339,10 @@ export default function HistoryClient() {
                   name="toTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>To Date & Time</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <CalendarClock className="size-4 text-blue-500" />
+                        To Date & Time
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="datetime-local"
@@ -297,6 +350,9 @@ export default function HistoryClient() {
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        End date for filtering reports
+                      </FormDescription>
                     </FormItem>
                   )}
                 />
@@ -307,10 +363,17 @@ export default function HistoryClient() {
                   variant="outline"
                   onClick={resetFilters}
                   disabled={loading}
+                  className="flex items-center gap-1"
                 >
+                  <RefreshCw className="size-4" />
                   Reset
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-blue-500 hover:bg-blue-600 transition-all duration-200 flex items-center gap-1"
+                >
+                  <Search className="size-4" />
                   Apply Filters
                 </Button>
               </div>
@@ -319,57 +382,89 @@ export default function HistoryClient() {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Reports Table Card */}
+      <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
         <CardHeader>
-          <CardTitle>Historical Reports</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <CloudSun className="size-5 text-blue-500" />
+            Historical Reports
+          </CardTitle>
           <CardDescription>
             Select two reports to compare their weather data.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-4">Loading reports...</div>
+            <div className="text-center py-12">
+              <div className="size-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-slate-600 dark:text-slate-400">
+                Loading reports...
+              </p>
+            </div>
           ) : !paginatedData || paginatedData.reports.length === 0 ? (
-            <div className="text-center py-4">
-              No reports found. Generate a report first.
+            <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-800">
+              <CalendarDays className="size-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">
+                No Reports Found
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                No weather reports match your criteria. Try adjusting your
+                filters or generate a new report first.
+              </p>
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Select</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Temperature (°C)</TableHead>
-                    <TableHead>Pressure (hPa)</TableHead>
-                    <TableHead>Humidity (%)</TableHead>
-                    <TableHead>Cloud Cover (%)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedData.reports.map((report) => (
-                    <TableRow key={report.id}>
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={selectedReports.includes(report.id)}
-                          onChange={() => handleReportSelect(report.id)}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                      </TableCell>
-                      <TableCell>{formatDate(report.timestamp)}</TableCell>
-                      <TableCell>{report.temperature}</TableCell>
-                      <TableCell>{report.pressure}</TableCell>
-                      <TableCell>{report.humidity}</TableCell>
-                      <TableCell>{report.cloudCover}</TableCell>
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-slate-50 dark:bg-slate-900">
+                    <TableRow>
+                      <TableHead className="w-12 text-center">Select</TableHead>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Temperature (°C)</TableHead>
+                      <TableHead>Pressure (hPa)</TableHead>
+                      <TableHead>Humidity (%)</TableHead>
+                      <TableHead>Cloud Cover (%)</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.reports.map((report) => (
+                      <TableRow
+                        key={report.id}
+                        className={
+                          selectedReports.includes(report.id)
+                            ? "bg-blue-50/50 dark:bg-blue-900/20"
+                            : ""
+                        }
+                      >
+                        <TableCell className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleReportSelect(report.id)}
+                            className={`flex items-center justify-center size-6 rounded-full mx-auto ${
+                              selectedReports.includes(report.id)
+                                ? "bg-blue-500 text-white"
+                                : "border border-slate-300 dark:border-slate-700 text-transparent hover:border-blue-500 dark:hover:border-blue-500"
+                            }`}
+                          >
+                            <CheckCircle2 className="size-4" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatDate(report.timestamp)}
+                        </TableCell>
+                        <TableCell>{report.temperature}</TableCell>
+                        <TableCell>{report.pressure}</TableCell>
+                        <TableCell>{report.humidity}</TableCell>
+                        <TableCell>{report.cloudCover}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-between border-t py-4">
           <div className="text-sm text-muted-foreground">
             {paginatedData && getPaginationText()}
           </div>
@@ -378,19 +473,37 @@ export default function HistoryClient() {
               variant="outline"
               onClick={handlePreviousPage}
               disabled={loading || currentPage <= 1}
+              className="flex items-center gap-1"
             >
+              <ChevronLeft className="size-4" />
               Previous
             </Button>
             <Button
               variant="outline"
               onClick={handleNextPage}
               disabled={loading || !paginatedData?.hasMore}
+              className="flex items-center gap-1"
             >
               Next
+              <ChevronRight className="size-4" />
             </Button>
           </div>
         </CardFooter>
       </Card>
+
+      {/* Mobile Compare Button */}
+      <div className="md:hidden mt-6 mb-8">
+        <Button
+          onClick={handleCompare}
+          disabled={selectedReports.length !== 2}
+          className="w-full bg-blue-500 hover:bg-blue-600 transition-all duration-200"
+        >
+          <span className="flex items-center gap-2 justify-center">
+            Compare Selected Reports ({selectedReports.length}/2)
+            <ArrowRight className="size-4" />
+          </span>
+        </Button>
+      </div>
     </div>
   );
 }
