@@ -13,11 +13,21 @@ type ComparisonRequest struct {
 	ReportID2 string `json:"reportId2"`
 }
 
+// SortOrder represents the sort order (ascending or descending)
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "asc"
+	SortOrderDesc SortOrder = "desc"
+)
+
 // PaginatedReportsRequest represents a request for paginated reports with optional filtering
 type PaginatedReportsRequest struct {
 	Limit      int       `json:"limit,omitempty"`      // Number of reports to return (default: 10)
-	LastID     string    `json:"lastId,omitempty"`     // ID of the last report from the previous page (for cursor-based pagination)
+	Offset     int       `json:"offset,omitempty"`     // Number of reports to skip (for pagination)
 	FromTime   time.Time `json:"fromTime,omitempty"`   // Filter reports from this time
 	ToTime     time.Time `json:"toTime,omitempty"`     // Filter reports until this time
 	IsFiltered bool      `json:"isFiltered,omitempty"` // Whether filtering is applied
+	SortBy     string    `json:"sortBy,omitempty"`     // Field to sort by (default: "timestamp")
+	SortOrder  SortOrder `json:"sortOrder,omitempty"`  // Sort order (default: "desc")
 }

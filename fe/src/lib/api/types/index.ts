@@ -55,23 +55,26 @@ export interface ComparisonResult {
 }
 
 /**
+ * Sort order for paginated reports
+ */
+export type SortOrder = 'asc' | 'desc';
+
+/**
  * Request parameters for paginated reports
  */
 export interface PaginatedReportsRequest {
-  limit?: number;      // Number of reports to return per page
-  lastId?: string;     // ID of the last report from the previous page
-  fromTime?: string;   // Filter reports from this time (ISO string)
-  toTime?: string;     // Filter reports until this time (ISO string)
+  limit?: number; // Number of reports to return per page
+  offset?: number; // Number of reports to skip (for pagination)
+  fromTime?: string; // Filter reports from this time (ISO string)
+  toTime?: string; // Filter reports until this time (ISO string)
+  sortBy?: string; // Field to sort by (default: "timestamp")
+  sortOrder?: SortOrder; // Sort order (default: "desc")
 }
 
 /**
  * Response for paginated reports
  */
 export interface PaginatedReportsResponse {
-  reports: WeatherReport[];  // List of reports for the current page
-  totalCount?: number;       // Total number of reports (only when not filtered)
-  hasMore: boolean;          // Whether there are more reports to fetch
-  currentPage: number;       // Current page number
-  fromNumber: number;        // Starting index of the current page
-  toNumber: number;          // Ending index of the current page
+  reports: WeatherReport[]; // List of reports for the current page
+  totalCount: number; // Total number of reports (for calculating total pages)
 }

@@ -397,7 +397,7 @@ func TestGetPaginatedReports(t *testing.T) {
 	ctx := context.Background()
 	req := &request.PaginatedReportsRequest{
 		Limit:  10,
-		LastID: "report1",
+		Offset: 0,
 	}
 
 	expectedResponse := &response.PaginatedReportsResponse{
@@ -412,11 +412,7 @@ func TestGetPaginatedReports(t *testing.T) {
 				CreatedAt:   time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC),
 			},
 		},
-		TotalCount:  1,
-		HasMore:     false,
-		CurrentPage: 2,
-		FromNumber:  2,
-		ToNumber:    2,
+		TotalCount: 10,
 	}
 
 	mockReportRepo.On("FindPaginatedReports", ctx, req).Return(expectedResponse, nil)

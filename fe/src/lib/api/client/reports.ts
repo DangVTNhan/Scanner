@@ -61,8 +61,16 @@ export async function getPaginatedReports(
     queryParams.append("limit", params.limit.toString());
   }
 
-  if (params.lastId) {
-    queryParams.append("lastId", params.lastId);
+  if (params.offset !== undefined && params.offset > 0) {
+    queryParams.append("offset", params.offset.toString());
+  }
+
+  if (params.sortBy) {
+    queryParams.append("sortBy", params.sortBy);
+  }
+
+  if (params.sortOrder) {
+    queryParams.append("sortOrder", params.sortOrder);
   }
 
   if (params.fromTime) {

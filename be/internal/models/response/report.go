@@ -19,10 +19,6 @@ type Deviation struct {
 
 // PaginatedReportsResponse represents a paginated response of weather reports
 type PaginatedReportsResponse struct {
-	Reports     []models.WeatherReport `json:"reports"`              // List of reports for the current page
-	TotalCount  int                    `json:"totalCount,omitempty"` // Total number of reports (only when not filtered)
-	HasMore     bool                   `json:"hasMore"`              // Whether there are more reports to fetch
-	CurrentPage int                    `json:"currentPage"`          // Current page number
-	FromNumber  int                    `json:"fromNumber"`           // Starting index of the current page
-	ToNumber    int                    `json:"toNumber"`             // Ending index of the current page
+	Reports    []models.WeatherReport `json:"reports"`    // List of reports for the current page
+	TotalCount int                    `json:"totalCount"` // Total number of reports (for calculating total pages)
 }
