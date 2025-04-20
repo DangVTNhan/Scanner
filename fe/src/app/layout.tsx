@@ -1,7 +1,7 @@
+import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
-import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,15 +26,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-50 w-full border-b bg-background mb-4">
             <div className="container mx-auto flex justify-between items-center h-16 px-4 py-2">
-              <h1 className="text-xl font-bold">Weather Report System</h1>
-              <nav className="flex space-x-4">
+              <h1 className="text-xl font-bold text-blue-500">
+                Weather Report System
+              </h1>
+              <nav className="flex space-x-4 text-blue-500">
                 <Link href="/" className="text-sm font-medium hover:underline">
                   Generate Report
                 </Link>

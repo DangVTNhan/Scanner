@@ -279,18 +279,6 @@ export default function HistoryClient() {
               Weather Report History
             </h1>
           </div>
-          <div className="flex-shrink-0 hidden md:block">
-            <Button
-              onClick={handleCompare}
-              disabled={selectedReports.length !== 2}
-              className="bg-blue-500 hover:bg-blue-600 transition-all duration-200"
-            >
-              <span className="flex items-center gap-2">
-                Compare Selected Reports
-                <ArrowRight className="size-4" />
-              </span>
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -384,14 +372,28 @@ export default function HistoryClient() {
 
       {/* Reports Table Card */}
       <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CloudSun className="size-5 text-blue-500" />
-            Historical Reports
-          </CardTitle>
-          <CardDescription>
-            Select two reports to compare their weather data.
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <CloudSun className="size-5 text-blue-500" />
+              Historical Reports
+            </CardTitle>
+            <CardDescription>
+              Select two reports to compare their weather data.
+            </CardDescription>
+          </div>
+          <div className="hidden md:block">
+            <Button
+              onClick={handleCompare}
+              disabled={selectedReports.length !== 2}
+              className="bg-blue-500 hover:bg-blue-600 transition-all duration-200"
+            >
+              <span className="flex items-center gap-2">
+                Compare Selected Reports ({selectedReports.length}/2)
+                <ArrowRight className="size-4" />
+              </span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
