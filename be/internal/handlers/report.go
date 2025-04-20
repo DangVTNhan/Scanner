@@ -27,6 +27,16 @@ func NewReportHandler(reportService interfaces.IReportService) *ReportHandler {
 }
 
 // GenerateReport handles requests to generate a new weather report
+// @Summary Generate a new weather report
+// @Description Generate a new weather report for Changi Airport at a specific time
+// @Tags reports
+// @Accept json
+// @Produce json
+// @Param request body request.ReportRequest true "Report request"
+// @Success 201 {object} response.BaseResponse{data=docs.WeatherReport} "Report generated successfully"
+// @Failure 400 {object} response.BaseResponse "Invalid request"
+// @Failure 500 {object} response.BaseResponse "Server error"
+// @Router /reports [post]
 func (h *ReportHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
 	var req request.ReportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -57,6 +67,13 @@ func (h *ReportHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAllReports handles requests to retrieve all weather reports (legacy endpoint)
+// @Summary Get all weather reports
+// @Description Get all weather reports (legacy endpoint, no pagination)
+// @Tags reports
+// @Produce json
+// @Success 200 {object} response.BaseResponse{data=[]docs.WeatherReport} "Reports retrieved successfully"
+// @Failure 500 {object} response.BaseResponse "Server error"
+// @Router /reports [get]
 func (h *ReportHandler) GetAllReports(w http.ResponseWriter, r *http.Request) {
 	reports, err := h.reportService.GetAllReports(r.Context())
 	if err != nil {
@@ -74,6 +91,20 @@ func (h *ReportHandler) GetAllReports(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPaginatedReports handles requests to retrieve paginated weather reports with optional filtering
+// @Summary Get paginated weather reports
+// @Description Get paginated weather reports with optional filtering by time range
+// @Tags reports
+// @Produce json
+// @Param limit query int false "Limit number of results"
+// @Param offset query int false "Offset for pagination"
+// @Param fromTime query string false "Filter by start time (RFC3339 format)"
+// @Param toTime query string false "Filter by end time (RFC3339 format)"
+// @Param sortBy query string false "Field to sort by"
+// @Param sortOrder query string false "Sort order (asc or desc)"
+// @Success 200 {object} response.BaseResponse{data=response.PaginatedReportsResponse} "Reports retrieved successfully"
+// @Failure 400 {object} response.BaseResponse "Invalid parameters"
+// @Failure 500 {object} response.BaseResponse "Server error"
+// @Router /reports/paginated [get]
 func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Request) {
 	// Parse query parameters
 	query := r.URL.Query()
@@ -144,6 +175,15 @@ func (h *ReportHandler) GetPaginatedReports(w http.ResponseWriter, r *http.Reque
 }
 
 // GetReportByID handles requests to retrieve a specific weather report
+// @Summary Get a weather report by ID
+// @Description Get a specific weather report by its ID
+// @Tags reports
+// @Produce json
+// @Param id path string true "Report ID"
+// @Success 200 {object} response.BaseResponse{data=docs.WeatherReport} "Report retrieved successfully"
+// @Failure 404 {object} response.BaseResponse "Report not found"
+// @Failure 500 {object} response.BaseResponse "Server error"
+// @Router /reports/{id} [get]
 func (h *ReportHandler) GetReportByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -168,6 +208,17 @@ func (h *ReportHandler) GetReportByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // CompareReports handles requests to compare two weather reports
+// @Summary Compare two weather reports
+// @Description Compare two weather reports and calculate the differences
+// @Tags reports
+// @Accept json
+// @Produce json
+// @Param request body request.ComparisonRequest true "Comparison request"
+// @Success 200 {object} response.BaseResponse{data=response.ComparisonResult} "Reports compared successfully"
+// @Failure 400 {object} response.BaseResponse "Invalid request"
+// @Failure 404 {object} response.BaseResponse "Report not found"
+// @Failure 500 {object} response.BaseResponse "Server error"
+// @Router /reports/compare [post]
 func (h *ReportHandler) CompareReports(w http.ResponseWriter, r *http.Request) {
 	var req request.ComparisonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -1,4 +1,4 @@
-.PHONY: run-be run-fe install-fe deps-be build-be clean docker-build docker-up docker-down test-be
+.PHONY: run-be run-fe install-fe deps-be build-be clean docker-build docker-up docker-down test-be generate-swagger
 
 # Backend
 run-be:
@@ -39,6 +39,10 @@ docker-down:
 
 docker-logs:
 	docker-compose logs -f
+
+# Swagger
+generate-swagger:
+	cd be && swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal --parseDepth 2 --generatedTime=false --propertyStrategy=camelcase
 
 # Clean
 clean:

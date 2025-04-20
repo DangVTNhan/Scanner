@@ -1,0 +1,473 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for generating and retrieving weather reports for Changi Airport",
+        "title": "Changi Airport Weather Report API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "email": "nhan.dangviettrung@gmail.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/reports": {
+            "get": {
+                "description": "Get all weather reports (legacy endpoint, no pagination)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get all weather reports",
+                "responses": {
+                    "200": {
+                        "description": "Reports retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/docs.WeatherReport"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Generate a new weather report for Changi Airport at a specific time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Generate a new weather report",
+                "parameters": [
+                    {
+                        "description": "Report request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_request.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Report generated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/docs.WeatherReport"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/compare": {
+            "post": {
+                "description": "Compare two weather reports and calculate the differences",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Compare two weather reports",
+                "parameters": [
+                    {
+                        "description": "Comparison request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_request.ComparisonRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reports compared successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.ComparisonResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/paginated": {
+            "get": {
+                "description": "Get paginated weather reports with optional filtering by time range",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get paginated weather reports",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by start time (RFC3339 format)",
+                        "name": "fromTime",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by end time (RFC3339 format)",
+                        "name": "toTime",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field to sort by",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc or desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reports retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.PaginatedReportsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/{id}": {
+            "get": {
+                "description": "Get a specific weather report by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get a weather report by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/docs.WeatherReport"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "docs.WeatherReport": {
+            "type": "object",
+            "properties": {
+                "cloudCover": {
+                    "description": "in %",
+                    "type": "number",
+                    "example": 30
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2023-04-18T12:05:00Z"
+                },
+                "humidity": {
+                    "description": "in %",
+                    "type": "number",
+                    "example": 60
+                },
+                "id": {
+                    "type": "string",
+                    "example": "60d21b4667d0d8992e89e9e5"
+                },
+                "pressure": {
+                    "description": "in hPa",
+                    "type": "number",
+                    "example": 1013.2
+                },
+                "temperature": {
+                    "description": "in Celsius",
+                    "type": "number",
+                    "example": 25.5
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2023-04-18T12:00:00Z"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport": {
+            "type": "object",
+            "properties": {
+                "cloudCover": {
+                    "description": "in %",
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "humidity": {
+                    "description": "in %",
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "pressure": {
+                    "description": "in hPa",
+                    "type": "number"
+                },
+                "temperature": {
+                    "description": "in Celsius",
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models_request.ComparisonRequest": {
+            "type": "object",
+            "properties": {
+                "reportId1": {
+                    "type": "string"
+                },
+                "reportId2": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models_request.ReportRequest": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "description": "Optional: if not provided, current time will be used",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models_response.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Response data (can be any type)"
+                },
+                "errorCode": {
+                    "description": "Error code (empty if status is success)",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "Human-readable message about the response",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status of the response (success, error)",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models_response.ComparisonResult": {
+            "type": "object",
+            "properties": {
+                "deviation": {
+                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models_response.Deviation"
+                },
+                "report1": {
+                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport"
+                },
+                "report2": {
+                    "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models_response.Deviation": {
+            "type": "object",
+            "properties": {
+                "cloudCover": {
+                    "type": "number"
+                },
+                "humidity": {
+                    "type": "number"
+                },
+                "pressure": {
+                    "type": "number"
+                },
+                "temperature": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_DangVTNhan_Scanner_be_internal_models_response.PaginatedReportsResponse": {
+            "type": "object",
+            "properties": {
+                "reports": {
+                    "description": "List of reports for the current page",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DangVTNhan_Scanner_be_internal_models.WeatherReport"
+                    }
+                },
+                "totalCount": {
+                    "description": "Total number of reports (for calculating total pages)",
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

@@ -91,16 +91,6 @@ docker-compose down
 docker-compose down -v
 ```
 
-#### Troubleshooting Docker Issues
-
-If you encounter issues with Docker builds, you can use the provided script:
-
-```bash
-./docker-debug.sh
-```
-
-This script will help diagnose and fix common Docker build issues.
-
 ### Manual Setup
 
 #### Backend
@@ -152,27 +142,55 @@ npm run dev
 
 The frontend will start on http://localhost:3000
 
-## API Endpoints
+## API Documentation
 
-### Generate Weather Report
+### Swagger UI
+
+The API documentation is available through Swagger UI in development and staging environments:
+
+```
+http://localhost:8080/swagger/index.html
+```
+
+To enable Swagger UI, make sure the `ENVIRONMENT` variable is set to either `dev` or `stg` in your `.env` file:
+
+```
+ENVIRONMENT=dev
+```
+
+To generate or update the Swagger documentation, run:
+
+```bash
+make generate-swagger
+```
+
+If you encounter any issues with Swagger generation, try:
+
+1. Make sure all model types referenced in your Swagger annotations are properly imported
+2. Check that the Go module path in your go.mod file matches the import paths in your code
+3. If you get redeclaration errors, check for duplicate type definitions
+
+### API Endpoints
+
+#### Generate Weather Report
 
 ```
 POST /api/reports
 ```
 
-### Get All Reports
+#### Get All Reports
 
 ```
 GET /api/reports
 ```
 
-### Get Report by ID
+#### Get Report by ID
 
 ```
 GET /api/reports/{id}
 ```
 
-### Compare Reports
+#### Compare Reports
 
 ```
 POST /api/reports/compare

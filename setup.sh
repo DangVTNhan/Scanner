@@ -185,7 +185,9 @@ fi
 if [ ! -f .env ]; then
     echo "Creating .env file..."
     echo "OPENWEATHER_API_KEY=your_api_key" >.env
+    echo "ENVIRONMENT=dev" >>.env
     echo ".env file created. Please edit it to add your OpenWeather API key."
+    echo "The ENVIRONMENT variable is set to 'dev' by default, which enables Swagger UI."
     echo ""
 fi
 

@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+// Environment type constants
+const (
+	EnvDev  = "dev"
+	EnvStg  = "stg"
+	EnvProd = "prod"
+)
+
 // Config holds the application configuration
 type Config struct {
 	MongoURI          string
@@ -12,6 +19,7 @@ type Config struct {
 	OpenWeatherAPIKey string
 	Port              string
 	CORS              CORSConfig
+	Environment       string
 }
 
 // CORSConfig holds the CORS configuration
@@ -58,6 +66,7 @@ func LoadConfig() *Config {
 		OpenWeatherAPIKey: os.Getenv("OPENWEATHER_API_KEY"),
 		Port:              getEnv("PORT", "8080"),
 		CORS:              corsConfig,
+		Environment:       getEnv("ENVIRONMENT", EnvDev),
 	}
 }
 
@@ -68,4 +77,9 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+// IsSwaggerEnabled returns true if Swagger should be enabled based on the environment
+func (c *Config) IsSwaggerEnabled() bool {
+	return c.Environment == EnvDev || c.Environment == EnvStg
 }

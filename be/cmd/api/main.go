@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/DangVTNhan/Scanner/be/configs"
+	_ "github.com/DangVTNhan/Scanner/be/docs" // Import swagger docs
 	"github.com/DangVTNhan/Scanner/be/internal/database"
 	"github.com/DangVTNhan/Scanner/be/internal/handlers"
 	"github.com/DangVTNhan/Scanner/be/internal/middleware"
@@ -18,8 +19,22 @@ import (
 	"github.com/DangVTNhan/Scanner/be/internal/services"
 	"github.com/DangVTNhan/Scanner/be/pkg/openweather"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title           Changi Airport Weather Report API
+// @version         1.0
+// @description     API for generating and retrieving weather reports for Changi Airport
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.email  nhan.dangviettrung@gmail.com
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @host      localhost:8080
+// @BasePath  /api
 func main() {
 	// Load configuration
 	config := configs.LoadConfig()
@@ -69,6 +84,17 @@ func main() {
 	router.HandleFunc("/api/reports/paginated", reportHandler.GetPaginatedReports).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/reports/{id}", reportHandler.GetReportByID).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/reports/compare", reportHandler.CompareReports).Methods("POST", "OPTIONS")
+
+	// Swagger documentation - only available in dev/stg environments
+	if config.IsSwaggerEnabled() {
+		fmt.Println("Swagger UI enabled at /swagger/index.html")
+		router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"), // The URL pointing to API definition
+			httpSwagger.DeepLinking(true),
+			httpSwagger.DocExpansion("none"),
+			httpSwagger.DomID("swagger-ui"),
+		))
+	}
 
 	// Start server
 	addr := ":" + config.Port
