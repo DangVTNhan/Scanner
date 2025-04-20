@@ -84,10 +84,11 @@ func (s *ReportService) GenerateReport(ctx context.Context, req *request.ReportR
 	}
 
 	// Save the weather data to cache
+	now := time.Now()
 	cache = &models.WeatherCache{
 		Timestamp:   timestamp,
 		WeatherData: *weatherData,
-		CreatedAt:   time.Now(),
+		CreatedAt:   now,
 	}
 
 	_, err = s.weatherCacheRepo.SaveWeatherCache(ctx, cache)
