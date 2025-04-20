@@ -142,6 +142,36 @@ npm run dev
 
 The frontend will start on http://localhost:3000
 
+## Testing
+
+### Backend Tests
+
+Run the backend tests:
+
+```bash
+make test-be
+# or
+cd be && go test ./...
+```
+
+### Frontend Tests
+
+Run the frontend tests:
+
+```bash
+make test-fe
+# or
+cd fe && npm test
+```
+
+Generate frontend test coverage report:
+
+```bash
+make test-fe-coverage
+# or
+cd fe && npm run test:coverage 
+```
+
 ## API Documentation
 
 ### Swagger UI
@@ -211,3 +241,4 @@ POST /api/reports/compare
 - Uses Shadcn UI for a clean, modern interface
 - Responsive design for mobile and desktop
 - Client-side form validation and error handling
+- Comprehensive test suite using Jest and React Testing Library

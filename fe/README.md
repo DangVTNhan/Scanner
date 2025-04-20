@@ -11,6 +11,7 @@ This is the frontend application for the Changi Airport Weather Report System, a
 - **Notifications**: [Sonner](https://sonner.emilkowal.ski/) for toast notifications
 - **Icons**: [Lucide React](https://lucide.dev/) for beautiful icons
 - **Fonts**: [Geist](https://vercel.com/font) font family from Vercel
+- **Testing**: [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 
 ## Features
 
@@ -81,6 +82,32 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
+### Testing
+
+Run the tests:
+
+```bash
+npm test
+# or
+yarn test
+```
+
+Run the tests in watch mode:
+
+```bash
+npm run test:watch
+# or
+yarn test:watch
+```
+
+Generate test coverage report:
+
+```bash
+npm run test:coverage
+# or
+yarn test:coverage --ignore-engines
+```
+
 ### Building for Production
 
 ```bash
@@ -111,3 +138,5 @@ docker-compose up -d
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API
 - [Shadcn UI Documentation](https://ui.shadcn.com/docs) - learn about the UI components
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs) - learn about Tailwind CSS
+- [Jest Documentation](https://jestjs.io/docs/getting-started) - learn about Jest testing framework
+- [React Testing Library Documentation](https://testing-library.com/docs/react-testing-library/intro/) - learn about React Testing Library
